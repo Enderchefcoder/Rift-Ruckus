@@ -1,222 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>RIFT RUCKUS</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none}
-html,body{overflow:hidden;height:100%;width:100%}
-body{background:#0d1b2a;font-family:system-ui,sans-serif}
-canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
-.vignette{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:50;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.45) 100%)}
-#hud{position:fixed;top:0;left:0;right:0;pointer-events:none;z-index:100;padding:10px}
-.hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.panel{background:rgba(15,25,45,.92);border-radius:16px;pointer-events:auto;border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px)}
-.player-info{padding:10px 14px;display:flex;align-items:center;gap:12px}
-.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e74c3c,#27ae60);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid rgba(255,255,255,.3)}
-.pname{font-size:14px;font-weight:700;color:#fff}
-.plevel{font-size:11px;color:rgba(255,255,255,.6)}
-.coins{display:flex;gap:6px}
-.coin{padding:8px 12px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:#fff}
-.joy-area{position:fixed;bottom:25px;width:120px;height:120px;z-index:200}
-#joyL{left:18px}
-#joyR{right:18px}
-.joy-ring{position:absolute;width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,.08);border:3px solid rgba(255,255,255,.2)}
-.joy-knob{position:absolute;width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#fff,#ccc);box-shadow:0 4px 18px rgba(0,0,0,.5);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-.joy-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase}
-.btns{position:fixed;bottom:160px;right:14px;display:flex;gap:10px;z-index:200}
-.btn{width:58px;height:58px;border-radius:50%;border:none;font-size:24px;cursor:pointer;position:relative;box-shadow:0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
-.btn:active{transform:scale(.85)}
-.btn.hidden{display:none!important}
-.btn-jump{background:linear-gradient(145deg,#3498db,#2980b9)}
-.btn-grab{background:linear-gradient(145deg,#e74c3c,#c0392b)}
-.btn-skill{background:linear-gradient(145deg,#9b59b6,#8e44ad)}
-.btn-cd{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff}
-.btn.cd .btn-cd{display:flex}
-.btn.cd{opacity:.4}
-.btn-label{position:absolute;bottom:-15px;font-size:8px;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap}
-.side-btns{position:fixed;bottom:275px;right:16px;display:flex;flex-direction:column;gap:10px;z-index:200}
-.side-btn{width:46px;height:46px;border-radius:50%;border:none;font-size:18px;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
-.emote-btn{background:linear-gradient(145deg,#f1c40f,#d4ac0d)}
-.sprint-btn{background:linear-gradient(145deg,#7f8c8d,#616a6b)}
-.sprint-btn.on{background:linear-gradient(145deg,#2ecc71,#27ae60)}
-.emote-pop{position:fixed;bottom:340px;right:16px;background:rgba(15,25,45,.97);border-radius:16px;padding:10px;display:none;z-index:250;border:1px solid rgba(255,255,255,.12)}
-.emote-pop.show{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.emote-pop button{width:40px;height:40px;border-radius:10px;border:none;font-size:20px;background:rgba(255,255,255,.1);cursor:pointer}
-.prompt{position:fixed;bottom:300px;left:50%;transform:translateX(-50%);padding:14px 26px;border-radius:28px;display:none;align-items:center;gap:12px;z-index:150;background:rgba(15,25,45,.95);border:2px solid rgba(255,255,255,.15)}
-.prompt.show{display:flex}
-.prompt-icon{font-size:26px}
-.prompt-text{font-weight:700;font-size:14px;color:#fff}
-.prompt-go{background:linear-gradient(135deg,#e74c3c,#27ae60);color:#fff;border:none;padding:10px 22px;border-radius:18px;font-weight:700;font-size:13px;cursor:pointer}
-.indicator{position:fixed;top:140px;left:50%;transform:translateX(-50%);padding:12px 24px;background:rgba(0,0,0,.9);border-radius:20px;color:#fff;font-weight:700;font-size:14px;z-index:150;display:none;border:2px solid #ffd700;text-align:center}
-.indicator.show{display:block}
-.minimap{position:fixed;top:78px;right:10px;width:100px;height:100px;background:rgba(0,0,0,.75);border-radius:14px;border:2px solid rgba(255,255,255,.2);z-index:95;display:none;overflow:hidden}
-.minimap.show{display:block}
-.mm-me{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:#ffd700;border-radius:50%;box-shadow:0 0 8px #ffd700;z-index:2;border:2px solid #fff}
-.mm-dot{position:absolute;width:7px;height:7px;border-radius:50%;transform:translate(-50%,-50%)}
-.mm-dot.bot{background:#ff6b6b;box-shadow:0 0 5px #ff6b6b}
-.mm-dot.it{background:#ff00ff;box-shadow:0 0 8px #ff00ff}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
-.overlay.show{display:flex}
-.box{background:linear-gradient(180deg,#1a2a40,#0f1a2a);border-radius:22px;width:100%;max-width:380px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
-.box-head{padding:18px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08)}
-.box-head h2{font-size:22px;color:#fff}
-.box-head p{font-size:12px;color:rgba(255,255,255,.5);margin-top:4px}
-.box-body{padding:14px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.box-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:#e74c3c;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.ml{display:flex;flex-direction:column;gap:12px}
-.mc{background:rgba(255,255,255,.07);border-radius:14px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:14px}
-.mc:active{background:rgba(255,255,255,.14)}
-.mc-icon{font-size:32px;width:44px;text-align:center}
-.mc-info h4{font-size:15px;font-weight:700;color:#fff}
-.mc-info p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
-.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.cc{background:rgba(255,255,255,.07);border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;border:3px solid transparent}
-.cc:active{transform:scale(.95)}
-.cc.sel{border-color:#ffd700;background:rgba(255,215,0,.12)}
-.cc-av{width:50px;height:50px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(255,255,255,.25)}
-.cc-n{font-size:11px;font-weight:700;color:#fff}
-.cc-r{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px}
-.cp{margin-top:14px;padding:14px;background:rgba(255,255,255,.04);border-radius:14px}
-.cp-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
-.cp-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,.25)}
-.cp-name{font-size:18px;font-weight:800;color:#fff}
-.cp-role{font-size:12px;color:rgba(255,255,255,.5)}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.stat{display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.7)}
-.stat-track{flex:1;height:8px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
-.stat-fill{height:100%;border-radius:4px}
-.ab{background:rgba(155,89,182,.12);padding:12px;border-radius:10px;margin-bottom:8px}
-.ab h5{font-size:12px;color:#b39ddb;margin-bottom:3px;font-weight:700}
-.ab p{font-size:11px;color:rgba(255,255,255,.65)}
-.sel-btn{width:100%;padding:14px;background:linear-gradient(135deg,#e74c3c,#27ae60);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px}
-.ag{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.ac{background:rgba(255,255,255,.07);border-radius:12px;padding:14px;text-align:center;cursor:pointer}
-.ac:active{background:rgba(255,255,255,.14)}
-.ac-icon{font-size:36px;margin-bottom:6px}
-.ac-name{font-weight:700;font-size:12px;color:#fff}
-.ghud{position:fixed;top:0;left:0;right:0;padding:12px;background:linear-gradient(180deg,rgba(0,0,0,.8),transparent);display:none;z-index:100}
-.ghud.show{display:block}
-.g-title{font-size:18px;font-weight:800;color:#fff;text-align:center}
-.g-time{font-size:56px;font-weight:900;color:#fff;text-align:center;line-height:1}
-.g-time.warn{color:#ffe66d}
-.g-time.danger{color:#ff6b6b;animation:tp .3s infinite}
-@keyframes tp{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-.g-tip{position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);padding:10px 22px;border-radius:14px;color:#fff;font-size:13px;font-weight:600;text-align:center;max-width:90%;z-index:100;display:none}
-.g-tip.show{display:block}
-.sb{position:fixed;top:190px;right:10px;min-width:130px;border-radius:12px;overflow:hidden;display:none;z-index:100}
-.sb.show{display:block}
-.sb-h{background:linear-gradient(135deg,#e74c3c,#27ae60);padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase}
-.sb-b{background:rgba(15,25,45,.97);padding:6px;max-height:300px;overflow-y:auto}
-.sb-r{display:flex;align-items:center;padding:7px 8px;border-radius:8px;margin-bottom:3px}
-.sb-r.me{background:rgba(231,76,60,.25)}
-.sb-r.top{background:rgba(255,215,0,.25)}
-.sb-rk{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;margin-right:8px;color:#fff}
-.sb-r.top .sb-rk{background:#ffd700}
-.sb-nm{flex:1;font-size:11px;font-weight:600;color:#fff}
-.sb-sc{font-weight:800;font-size:13px;color:#fff}
-.cd-scr{position:fixed;inset:0;background:rgba(15,25,45,.98);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:600}
-.cd-scr.show{display:flex}
-.cd-gn{font-size:28px;font-weight:800;color:#fff;margin-bottom:8px;text-align:center}
-.cd-tip{font-size:14px;color:rgba(255,255,255,.65);margin-bottom:28px;text-align:center;padding:0 28px}
-.cd-num{font-size:140px;font-weight:900;color:#fff;text-shadow:0 0 60px rgba(231,76,60,.7);line-height:1}
-.cd-go{color:#4ecdc4;text-shadow:0 0 60px rgba(78,205,196,.7)}
-.res{position:fixed;inset:0;background:linear-gradient(135deg,rgba(231,76,60,.96),rgba(39,174,96,.96));display:none;flex-direction:column;align-items:center;justify-content:center;z-index:700;padding:20px;overflow-y:auto}
-.res.show{display:flex}
-.res-t{font-size:40px;font-weight:900;color:#fff;margin-bottom:10px}
-.res-s{font-size:14px;color:rgba(255,255,255,.8);margin-bottom:14px}
-.pod{display:flex;align-items:flex-end;gap:10px;margin-bottom:16px}
-.pod-s{display:flex;flex-direction:column;align-items:center}
-.pod-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:6px;border:3px solid rgba(255,255,255,.5)}
-.pod-n{color:#fff;font-weight:700;font-size:11px}
-.pod-p{color:rgba(255,255,255,.8);font-size:10px;margin-bottom:6px}
-.pod-b{width:60px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;border-radius:10px 10px 0 0}
-.pod-s:nth-child(1) .pod-b{height:60px;background:#c0c0c0}
-.pod-s:nth-child(2) .pod-b{height:85px;background:#ffd700}
-.pod-s:nth-child(3) .pod-b{height:50px;background:#cd7f32}
-.rew{display:flex;gap:10px;margin-bottom:14px}
-.rew-c{padding:10px 18px;background:rgba(255,255,255,.18);border-radius:14px;color:#fff;font-weight:700;font-size:13px}
-.res-btns{display:flex;gap:10px}
-.res-btn{padding:14px 28px;font-size:14px;font-weight:800;border:none;border-radius:18px;cursor:pointer}
-.res-btn:active{transform:scale(.95)}
-.res-btn.pri{background:#fff;color:#e74c3c}
-.res-btn.sec{background:rgba(255,255,255,.18);color:#fff}
-.ld{position:fixed;inset:0;background:#0d1b2a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
-.ld.gone{opacity:0;pointer-events:none}
-.ld-logo{font-size:70px;margin-bottom:14px}
-.ld-title{font-size:36px;font-weight:900;color:#fff}
-.ld-sub{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:6px;margin-bottom:28px}
-.ld-bar{width:240px;height:10px;background:rgba(255,255,255,.12);border-radius:5px;overflow:hidden}
-.ld-fill{height:100%;background:linear-gradient(90deg,#e74c3c,#27ae60);border-radius:5px;width:0%}
-.notifs{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:800;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.noti{padding:10px 20px;border-radius:12px;background:rgba(15,25,45,.95);display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;color:#fff;animation:nIn .25s ease;border:1px solid rgba(255,255,255,.1)}
-@keyframes nIn{from{transform:translateY(-20px);opacity:0}}
-.noti.ok{border-left:4px solid #4ecdc4}
-.noti.bad{border-left:4px solid #ff6b6b}
-.noti.inf{border-left:4px solid #3498db}
-.particles{position:fixed;inset:0;pointer-events:none;z-index:1000;overflow:hidden}
-.snow{position:absolute;color:#fff;animation:sf linear forwards;opacity:.8}
-@keyframes sf{to{transform:translateY(105vh)}}
-.stumble{position:fixed;inset:0;pointer-events:none;z-index:90;display:none}
-.stumble.on{display:block;animation:st .35s ease}
-@keyframes st{0%{background:radial-gradient(ellipse at center,rgba(255,0,0,.35),transparent)}100%{background:transparent}}
-.speed{position:fixed;inset:0;pointer-events:none;z-index:88;background:radial-gradient(ellipse at center,transparent 20%,rgba(255,255,255,.15) 100%);display:none}
-.speed.on{display:block}
-</style>
-</head>
-<body>
-<div class="vignette"></div>
-<div class="ld" id="LD"><div class="ld-logo">🎄</div><div class="ld-title">RIFT RUCKUS</div><div class="ld-sub">HOLIDAY EDITION</div><div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div></div>
-<canvas id="C"></canvas>
-<div id="hud">
-<div class="hud-top">
-<div class="panel player-info"><div class="avatar" id="hAvatar">😎</div><div><div class="pname" id="hName">Player</div><div class="plevel">Lv.<span id="hLv">1</span></div></div></div>
-<div class="coins"><div class="panel coin">💎 <span id="hGems">500</span></div><div class="panel coin">👑 <span id="hCrowns">10</span></div></div>
-</div>
-</div>
-<div class="minimap" id="MM"><div class="mm-me"></div></div>
-<div class="joy-area" id="joyL"><div class="joy-ring"></div><div class="joy-knob" id="knobL"></div><div class="joy-label">Move</div></div>
-<div class="joy-area" id="joyR"><div class="joy-ring"></div><div class="joy-knob" id="knobR"></div><div class="joy-label">Look</div></div>
-<div class="btns" id="BTNS">
-<button class="btn btn-jump" id="bJump">🦘<div class="btn-cd" id="cdJump"></div><span class="btn-label">Jump</span></button>
-<button class="btn btn-grab" id="bGrab">🤜<div class="btn-cd" id="cdGrab"></div><span class="btn-label">Grab</span></button>
-<button class="btn btn-skill" id="bSkill">⚡<div class="btn-cd" id="cdSkill"></div><span class="btn-label" id="lblSkill">Skill</span></button>
-</div>
-<div class="side-btns" id="SIDE">
-<button class="side-btn emote-btn" id="bEmote">😄</button>
-<button class="side-btn sprint-btn" id="bSprint">🏃</button>
-</div>
-<div class="emote-pop" id="emPop"></div>
-<div class="panel prompt" id="PROMPT"><span class="prompt-icon" id="prIcon">🌀</span><span class="prompt-text" id="prText">Enter</span><button class="prompt-go" id="prGo">Go</button></div>
-<div class="indicator" id="IND"></div>
-<div class="notifs" id="NOTIFS"></div>
-<div class="particles" id="PARTS"></div>
-<div class="stumble" id="STUMBLE"></div>
-<div class="speed" id="SPEED"></div>
-
-<div class="overlay" id="oPortal"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oPortal')">×</button><div class="box-head"><h2>🎄 Portal</h2><p>Choose mode</p></div><div class="box-body" id="modeList"></div></div></div>
-<div class="overlay" id="oChar"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oChar')">×</button><div class="box-head"><h2>🎭 Runner</h2><p>Choose character</p></div><div class="box-body"><div class="cg" id="charGrid"></div><div class="cp" id="charPrev"></div></div></div></div>
-<div class="overlay" id="oArcade"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oArcade')">×</button><div class="box-head"><h2>🕹️ Practice</h2><p>Choose game</p></div><div class="box-body"><div class="ag" id="arcGrid"></div></div></div></div>
-
-<div class="ghud" id="GHUD"><div class="g-title" id="gTitle">Game</div><div class="g-time" id="gTime">60</div></div>
-<div class="g-tip" id="gTip"></div>
-<div class="sb" id="SB"><div class="sb-h">Standings</div><div class="sb-b" id="sbBody"></div></div>
-<div class="cd-scr" id="CDOWN"><div class="cd-gn" id="cdName">Game</div><div class="cd-tip" id="cdTip">Tip</div><div class="cd-num" id="cdNum">3</div></div>
-<div class="res" id="RES"><div class="res-t" id="resT">Victory!</div><div class="res-s" id="resS"></div><div class="pod" id="resPod"></div><div class="rew" id="resRew"></div><div class="res-btns"><button class="res-btn pri" id="resNext">Continue</button><button class="res-btn sec" id="resAgain">Rematch</button></div></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// ========== SAFE HELPERS ==========
-const $=id=>document.getElementById(id);
-const sMesh=(g,m)=>{const e=new THREE.Mesh(g,m);e.castShadow=e.receiveShadow=true;return e;};
-const addMesh=m=>{scene.add(m);(state===ST.LOBBY?lobbyMeshes:gameMeshes).push(m);};
-const show=id=>{const e=$(id);if(e)e.classList.add('show');};
-const hide=id=>{const e=$(id);if(e)e.classList.remove('show');};
-const setText=(id,t)=>{const e=$(id);if(e)e.textContent=t;};
-const rnd=(a,b)=>a+Math.random()*(b-a);
-const shuffle=a=>[...a].sort(()=>Math.random()-.5);
-const d2=(a,b)=>Math.sqrt((a.x-b.x)**2+(a.z-b.z)**2);
 const d3=(a,b)=>Math.sqrt((a.x-b.x)**2+((a.y||0)-(b.y||0))**2+(a.z-b.z)**2);
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function notify(msg,type='inf'){const c=$('NOTIFS');if(!c)return;const n=document.createElement('div');n.className='noti '+type;n.textContent=msg;c.appendChild(n);setTimeout(()=>{n.style.opacity='0';setTimeout(()=>n.remove(),200);},2200);}
@@ -288,7 +69,7 @@ scene.add(sun);
 scene.add(new THREE.HemisphereLight(0x6699cc,0x334455,.5));
 }
 
-function mat(c,r=.5){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:.1});}
+function mat(c,r=.5){return sMeshStandardMaterial({color:c,roughness:r,metalness:.1});}
 
 function makeChar(ch,isBot=false){
 const g=new THREE.Group();
@@ -401,7 +182,7 @@ function buildMirror(x,y,z){
 const g=new THREE.Group();g.position.set(x,y,z);
 const frame=sMesh(new THREE.BoxGeometry(5,7,.7),mat(0xFFD700,.2));
 frame.position.y=4;frame.castShadow=true;g.add(frame);
-const mirror=sMesh(new THREE.BoxGeometry(4.2,6,.15),new THREE.MeshStandardMaterial({color:0xE8EAF6,metalness:.95,roughness:.05}));
+const mirror=sMesh(new THREE.BoxGeometry(4.2,6,.15),sMeshStandardMaterial({color:0xE8EAF6,metalness:.95,roughness:.05}));
 mirror.position.set(0,4,.45);g.add(mirror);
 g.rotation.y=-Math.PI/2;
 g.userData={interact:true,type:'char',text:'Choose Runner',icon:'🎭',r:10};
@@ -436,9 +217,9 @@ scene.add(g);lobbyMeshes.push(g);
 function buildSnowman(x,z){
 const g=new THREE.Group();g.position.set(x,0,z);
 const sm=mat(0xFFFFFF,.75);
-const b1=sMesh(new THREE.SphereGeometry(1.2,14,12),sm); b1.position.y=1.2; g.add(b1);
-const b2=sMesh(new THREE.SphereGeometry(.9,12,10),sm); b2.position.y=2.8; g.add(b2);
-const b3=sMesh(new THREE.SphereGeometry(.65,10,8),sm); b3.position.y=4.0; g.add(b3);
+g.add(Object.assign(sMesh(new THREE.SphereGeometry(1.2,14,12),sm),{position:new THREE.Vector3(0,1.2,0)}));
+g.add(Object.assign(sMesh(new THREE.SphereGeometry(.9,12,10),sm),{position:new THREE.Vector3(0,2.8,0)}));
+g.add(Object.assign(sMesh(new THREE.SphereGeometry(.65,10,8),sm),{position:new THREE.Vector3(0,4,0)}));
 const nose=sMesh(new THREE.ConeGeometry(.08,.45,6),mat(0xFF6600));
 nose.position.set(0,4,.65);nose.rotation.x=Math.PI/2;g.add(nose);
 scene.add(g);lobbyMeshes.push(g);
@@ -633,17 +414,6 @@ case'dash':
   pVel.x+=fwd.x*1.2;pVel.z+=fwd.z*1.2;
   flash('SPEED',500);
   mkParts(player.position.x,1,player.position.z,0x4ECDC4,25);
-  break;
-case'stun':
-  mkParts(player.position.x,1,player.position.z,0x795548,40);
-  bots.forEach(b=>{ if(d3(player.position,b.mesh.position)<15){ b.stunned=1.5; b.vel.y=0.2; showEmoji(b.mesh,'💫'); } });
-  break;
-case'buff':
-  P.buffTime=5; flash('SPEED',5000); showEmoji(player,'🎁');
-  break;
-case'jump':
-  pVel.y=0.6; mkParts(player.position.x,0.5,player.position.z,0xFF69B4,20);
-  break;
   break;
 case'jump':
   pVel.y=.7;grounded=false;
@@ -1164,15 +934,9 @@ notify('Tagged '+b.name+'! +100','ok'); P.score+=100; b.score=Math.max(0,b.score
 });
 }
 }
-if(curGame?.type==='pads'){
-  if(musicOn){
-    const pd=d2(player.position,{x:0,z:0});
-    if(pd>70){player.position.x*=70/pd;player.position.z*=70/pd;}
-  }
-}
-if(curGame?.type==='collect'){
-  const pd=d2(player.position,{x:0,z:0});
-  if(pd>70){player.position.x*=70/pd;player.position.z*=70/pd;}
+if(curGame?.type==='collect'||curGame?.type==='pads'){
+const pd=d2(player.position,{x:0,z:0});
+if(pd>70){player.position.x*=70/pd;player.position.z*=70/pd;}
 }
 runBotAI(dt);
 updateSB();
@@ -1268,7 +1032,7 @@ bots.forEach((b,i)=>{b.mesh.visible=true;b.eliminated=false;const a=((i+1)/(bots
 // ========== PARTICLES ==========
 function mkParts(x,y,z,col,n){
 for(let i=0;i<n;i++){
-const m=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9});
+const m=sMeshBasicMaterial({color:col,transparent:true,opacity:.9});
 const p=sMesh(new THREE.SphereGeometry(.15,8,6),m);
 p.position.set(x,y,z);
 p.userData={vx:rnd(-.5,.5),vy:rnd(.2,.55),vz:rnd(-.5,.5),life:1,m};
@@ -1323,9 +1087,9 @@ if(dd>1.5){b.mesh.position.x+=(dx/dd)*.05;b.mesh.position.z+=(dz/dd)*.05;b.mesh.
 if(gActive&&P.stunned<=0){
 const c=curC();
 const inp=joy.l;
-const sprint=(P.sprinting&&P.stamina>0?1.4:1)*(P.buffTime>0?1.3:1);
+const sprint=P.sprinting&&P.stamina>0?1.4:1;
 if(P.sprinting&&P.stamina>0)P.stamina=Math.max(0,P.stamina-dt*30);
-const spd=SPD*(c.spd/80)*sprint*.55*(curGame?.type==='pads'?!musicOn?0.15:0.7:1);
+const spd=SPD*(c.spd/80)*sprint*.55;
 const mag=Math.sqrt(inp.x**2+inp.y**2);
 if(mag>.1){
 const ang=Math.atan2(inp.x,inp.y)+camAng;
