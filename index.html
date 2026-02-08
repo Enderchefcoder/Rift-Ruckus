@@ -105,7 +105,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 @keyframes tp{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .g-tip{position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);padding:10px 22px;border-radius:14px;color:#fff;font-size:13px;font-weight:600;text-align:center;max-width:90%;z-index:100;display:none}
 .g-tip.show{display:block}
-.sb{position:fixed;top:190px;right:10px;min-width:130px;border-radius:12px;overflow:hidden;display:none;z-index:100}
+.sb{position:fixed;top:140px;left:10px;min-width:130px;border-radius:12px;overflow:hidden;display:none;z-index:100}
 .sb.show{display:block}
 .sb-h{background:linear-gradient(135deg,#e74c3c,#27ae60);padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase}
 .sb-b{background:rgba(15,25,45,.97);padding:6px;max-height:300px;overflow-y:auto}
@@ -167,7 +167,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 </head>
 <body>
 <div class="vignette"></div>
-<div class="ld" id="LD"><div class="ld-logo">🎄</div><div class="ld-title">RIFT RUCKUS</div><div class="ld-sub">HOLIDAY EDITION</div><div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div></div>
+<div class="ld" id="LD"><div class="ld-logo" id="ldLogo">🌀</div><div class="ld-title">RIFT RUCKUS</div><div class="ld-sub" id="ldSub">RIFT EDITION</div><div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div></div>
 <canvas id="C"></canvas>
 <div id="hud">
 <div class="hud-top">
@@ -240,6 +240,10 @@ const GAMES=[
 ];
 
 const IS_DEC = new Date().getMonth() === 11;
+if(IS_DEC){
+  const ll=$('ldLogo'); if(ll)ll.textContent='🎄';
+  const ls=$('ldSub'); if(ls)ls.textContent='HOLIDAY EDITION';
+}
 const EMOTES=['😄','🎄','🎅','⛄','🎁','❄️','🔥','💪'];
 
 // ========== STATE ==========
@@ -249,7 +253,7 @@ let P={gems:500,crowns:10,charId:'glitch',score:0,isIt:false,tagImmune:0,
 skillCD:0,grabCD:0,stunned:0,stamina:100,sprinting:false,hillTime:0,lv:1,xp:0,buffTime:0};
 let selChar='glitch';
 let scene,cam,ren,clk,sun;
-let player,bots=[],lobbyMeshes=[],gameMeshes=[],stars=[],pads=[];
+var player,bots=[],lobbyMeshes=[],gameMeshes=[],stars=[],pads=[];
 let solidPlatforms=[]; // {mesh, radius, topY}
 let hillMesh=null; // {mesh, radius, topY}
 let interacts=[];
@@ -281,7 +285,7 @@ ren.toneMappingExposure=1.2;
 clk=new THREE.Clock();
 // Lights
 scene.add(new THREE.AmbientLight(0x8899bb,.5));
-const sun=new THREE.DirectionalLight(0xfff5e0,1.1);
+sun=new THREE.DirectionalLight(0xfff5e0,1.1);
 sun.position.set(80,120,80);sun.castShadow=true;
 const s=sun.shadow;s.mapSize.width=s.mapSize.height=2048;s.camera.near=20;s.camera.far=400;s.camera.left=s.camera.bottom=-120;s.camera.right=s.camera.top=120;
 scene.add(sun);
@@ -342,17 +346,21 @@ for(let i=0;i<8;i++){ const a=rnd(0,Math.PI*2),r=30+rnd(0,35); buildSnowman(Math
 for(let i=0;i<15;i++){ const a=rnd(0,Math.PI*2),r=24+rnd(0,50); buildPresent(Math.cos(a)*r,Math.sin(a)*r); }
 for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2,r=30; buildLamp(Math.cos(a)*r,Math.sin(a)*r); }
 }else{
-const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x1a1a2e,.9));
+const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x2d5a27,.9));
 gnd.rotation.x=-Math.PI/2;addMesh(gnd);
 const plazaR=20,plazaH=2;
-const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0x16213e,.4));
+const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0x3e4a59,.4));
 plaza.position.y=plazaH/2;addMesh(plaza);
 solidPlatforms.push({mesh:plaza,radius:plazaR,topY:plazaH});
-const g=new THREE.Group(); g.position.set(0,plazaH,0);
-const cry=sMesh(new THREE.OctahedronGeometry(6),mat(0x00D4FF,.2));
-cry.position.y=8; cry.userData.spin=true; cry.userData.bob=true; cry.userData.baseY=8; g.add(cry);
-const lt=new THREE.PointLight(0x00D4FF,2,40); lt.position.y=8; g.add(lt);
-addMesh(g);
+// Fountain
+const f=new THREE.Group(); f.position.set(0,plazaH,0);
+const fBase=sMesh(new THREE.CylinderGeometry(5,5,1.2,24),mat(0x7f8c8d)); fBase.position.y=0.6; f.add(fBase);
+const fMid=sMesh(new THREE.CylinderGeometry(1.5,1.5,4,16),mat(0x7f8c8d)); fMid.position.y=2.5; f.add(fMid);
+const fTop=sMesh(new THREE.CylinderGeometry(3.5,3.5,0.6,16),mat(0x7f8c8d)); fTop.position.y=4.5; f.add(fTop);
+const water=sMesh(new THREE.SphereGeometry(3,16,12,0,Math.PI*2,0,Math.PI/2),mat(0x00D4FF,.4));
+water.position.y=4.5; f.add(water);
+const lt=new THREE.PointLight(0x00D4FF,2,30); lt.position.y=6; f.add(lt);
+addMesh(f);
 buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0);
 for(let i=0;i<40;i++){
 const a=(i/40)*Math.PI*2, r=50+rnd(0,50);
@@ -634,23 +642,12 @@ case'dash':
   flash('SPEED',500);
   mkParts(player.position.x,1,player.position.z,0x4ECDC4,25);
   break;
-case'stun':
-  mkParts(player.position.x,1,player.position.z,0x795548,40);
-  bots.forEach(b=>{ if(d3(player.position,b.mesh.position)<15){ b.stunned=1.5; b.vel.y=0.2; showEmoji(b.mesh,'💫'); } });
-  break;
-case'buff':
-  P.buffTime=5; flash('SPEED',5000); showEmoji(player,'🎁');
-  break;
-case'jump':
-  pVel.y=0.6; mkParts(player.position.x,0.5,player.position.z,0xFF69B4,20);
-  break;
-  break;
 case'jump':
   pVel.y=.7;grounded=false;
   mkParts(player.position.x,.3,player.position.z,0xFF69B4,25);
   break;
 case'stun':
-  bots.forEach(b=>{if(d3(player.position,b.mesh.position)<12){b.stunned=2.5;b.vel.y=.2;mkParts(b.mesh.position.x,1.5,b.mesh.position.z,0xFFD700,20);}});
+  bots.forEach(b=>{if(d3(player.position,b.mesh.position)<12){b.stunned=2.5;b.vel.y=.2;mkParts(b.mesh.position.x,1.5,b.mesh.position.z,0xFFD700,20);showEmoji(b.mesh,'💫');}});
   shakeAmt=.8;
   const ring=sMesh(new THREE.TorusGeometry(1,.2,8,32),mat(0xFFD700,.1));
   ring.position.copy(player.position); ring.rotation.x=Math.PI/2;
@@ -668,13 +665,13 @@ case'stun':
 case'buff':
   P.buffTime=5;
   notify('POWER UP!','ok');
+  flash('SPEED',5000);
   mkParts(player.position.x,2,player.position.z,0xFF0000,30);
   break;
 }
 notify(c.skill+'!','inf');
 showEmoji(player, c.emoji);
 }
-
 
 function cooldown(btnId,cdId,dur,prop){
 const btn=$(btnId);if(btn)btn.classList.add('cd');
@@ -898,7 +895,7 @@ gameMeshes.forEach(o=>scene.remove(o));gameMeshes=[];stars=[];pads=[];hillMesh=n
 const bgMap={collect:0x0D47A1,sumo:0x3E2723,hill:0xBF360C,tag:0x01579B,pads:0x4A148C};
 scene.background=new THREE.Color(bgMap[game.type]||0x1a2a4a);
 scene.fog=new THREE.FogExp2(bgMap[game.type]||0x1a2a4a,.005);
-const R=75;
+const R=game.type==='sumo'?35:75;
 // Ground
 const gnd=sMesh(new THREE.CircleGeometry(R,50),mat({collect:0x1B5E20,sumo:0x5D4037,hill:0xBF360C,tag:0x006064,pads:0x4A148C}[game.type]||0x1B5E20,.7));
 gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);gameMeshes.push(gnd);
@@ -914,6 +911,9 @@ for(let i=0;i<4;i++){ const a=(i/4)*Math.PI*2, r=40, x=Math.cos(a)*r, z=Math.sin
 if(game.type==='pads')buildPadGrid();
 if(game.type==='tag'){
 for(let i=0;i<8;i++){ const a=(i/8)*Math.PI*2, r=30, x=Math.cos(a)*r, z=Math.sin(a)*r; const p=sMesh(new THREE.BoxGeometry(6,12,6),mat(0x006064)); p.position.set(x,6,z); addMesh(p); solidPlatforms.push({mesh:p,radius:4,topY:12}); }
+}
+if(game.type==='sumo'){
+for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2+rnd(-.3,.3),r=12+rnd(0,10); const p=sMesh(new THREE.DodecahedronGeometry(rnd(3,5)),mat(0x5D4037)); p.position.set(Math.cos(a)*r,2,Math.sin(a)*r); p.rotation.set(rnd(0,6),rnd(0,6),rnd(0,6)); addMesh(p); solidPlatforms.push({mesh:p,radius:4,topY:4}); }
 }
 // Players
 player.visible=true;player.position.set(0,0,28);pVel={x:0,y:0,z:0};grounded=true;
@@ -1068,7 +1068,7 @@ if(state===ST.GAME && !b.isIt && Math.random() < 0.02) {
 }
 applyBotPhysics(b);
 const bd=d2(b.mesh.position,{x:0,z:0});
-const sumoR = (curGame?.type==='sumo'?40:70);
+const sumoR = (curGame?.type==='sumo'?28:70);
 if(bd>sumoR){
 if(curGame?.type==='sumo'){b.score=Math.max(0,b.score-50);const a=rnd(0,Math.PI*2);b.mesh.position.set(Math.cos(a)*15,0,Math.sin(a)*15);}
 else{b.mesh.position.x*=sumoR/bd;b.mesh.position.z*=sumoR/bd;}
@@ -1141,7 +1141,7 @@ P.hillTime=0; notify('Knocked off!','inf'); mkParts(player.position.x,1.5,player
 if(curGame?.type==='sumo'){
 if(scoreT>=1){ if(!P.isIt)P.score+=1; bots.forEach(b=>{if(!b.isIt&&!b.eliminated)b.score+=1;}); scoreT=0; }
 const pd=d2(player.position,{x:0,z:0});
-const sumoR = (curGame?.type==='sumo'?40:70);
+const sumoR = (curGame?.type==='sumo'?28:70);
 if(pd>sumoR){P.score=Math.max(0,P.score-50);player.position.set(0,0,0);flash('STUMBLE',350);}
 if(gTimer < curGame.dur - 10) {
   const shrink = 1 - (curGame.dur - 10 - gTimer) / 100;
@@ -1243,7 +1243,7 @@ setText('hGems',P.gems);
 const rr=$('resRew');if(rr)rr.innerHTML=`<div class="rew-c">💎 +${shards}</div>`;
 show('RES');
 if(won)for(let i=0;i<50;i++)setTimeout(()=>{
-const c=document.createElement('div');c.className='snow';c.textContent=['🎉','🎊','⭐','🎄','🎅'][Math.floor(Math.random()*5)];c.style.left=rnd(0,100)+'vw';c.style.fontSize='24px';c.style.animationDuration=rnd(3,5)+'s';$('PARTS')?.appendChild(c);setTimeout(()=>c.remove(),5000);
+const c=document.createElement('div');c.className='snow';c.textContent=(IS_DEC?['🎉','🎊','⭐','🎄','🎅']:['🎉','🎊','⭐','💎','🏆'])[Math.floor(Math.random()*5)];c.style.left=rnd(0,100)+'vw';c.style.fontSize='24px';c.style.animationDuration=rnd(3,5)+'s';$('PARTS')?.appendChild(c);setTimeout(()=>c.remove(),5000);
 },i*40);
 const next=$('resNext');if(next)next.textContent=rGames.length>0&&rIdx<rGames.length-1?'Next Game':'Continue';
 }
@@ -1366,14 +1366,14 @@ buildLobby();
 spawnPlayer();
 spawnBots(5);
 initControls();
-startSnow();
+if(IS_DEC) startSnow();
 startLoad();
 
 // ========== DEBUG SYSTEM ==========
 window.DEBUG = {
   gotoLobby: () => backToLobby(),
   start: (id) => {
-    const g = GAMES.find(x => x.id === id);
+    let g; if(typeof id === "number") g = GAMES[id]; else g = GAMES.find(x => x.id === id);
     if(g) startMinigame(g);
     else console.error("Game not found:", id);
   },
