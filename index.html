@@ -438,9 +438,9 @@ scene.add(g);lobbyMeshes.push(g);
 function buildSnowman(x,z){
 const g=new THREE.Group();g.position.set(x,0,z);
 const sm=mat(0xFFFFFF,.75);
-g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1.2,14,12),sm),{position:new THREE.Vector3(0,1.2,0)}));
-g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.9,12,10),sm),{position:new THREE.Vector3(0,2.8,0)}));
-g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.65,10,8),sm),{position:new THREE.Vector3(0,4,0)}));
+const b1=new THREE.Mesh(new THREE.SphereGeometry(1.2,14,12),sm);b1.position.set(0,1.2,0);g.add(b1);
+const b2=new THREE.Mesh(new THREE.SphereGeometry(.9,12,10),sm);b2.position.set(0,2.8,0);g.add(b2);
+const b3=new THREE.Mesh(new THREE.SphereGeometry(.65,10,8),sm);b3.position.set(0,4,0);g.add(b3);
 const nose=new THREE.Mesh(new THREE.ConeGeometry(.08,.45,6),mat(0xFF6600));
 nose.position.set(0,4,.65);nose.rotation.x=Math.PI/2;g.add(nose);
 scene.add(g);lobbyMeshes.push(g);
