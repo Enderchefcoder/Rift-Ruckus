@@ -210,7 +210,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 // ========== SAFE HELPERS ==========
 const $=id=>document.getElementById(id);
 const sMesh=(g,m)=>{const e=new THREE.Mesh(g,m);e.castShadow=e.receiveShadow=true;return e;};
-const addMesh=m=>{scene.add(m);(state===ST.LOBBY?lobbyMeshes:gameMeshes).push(m);};
+const addMesh=(m,isLobby=false)=>{scene.add(m);(isLobby?lobbyMeshes:gameMeshes).push(m);};
 const show=id=>{const e=$(id);if(e)e.classList.add('show');};
 const hide=id=>{const e=$(id);if(e)e.classList.remove('show');};
 const setText=(id,t)=>{const e=$(id);if(e)e.textContent=t;};
@@ -334,10 +334,10 @@ function buildLobby(){
 interacts=[];
 if(IS_DEC){
 const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0xE8F4F8,.8));
-gnd.rotation.x=-Math.PI/2;addMesh(gnd);
+gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
 const plazaR=18,plazaH=3;
 const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR+2,plazaH,32),mat(0x6D4C41,.5));
-plaza.position.y=plazaH/2;addMesh(plaza);
+plaza.position.y=plazaH/2;addMesh(plaza,true);
 solidPlatforms.push({mesh:plaza,radius:plazaR+2,topY:plazaH});
 buildXmasTree(0,plazaH,0);
 buildPortal(0,0,-42); buildMirror(42,0,0); buildArcade(-42,0,0);
@@ -926,7 +926,7 @@ b.vel={x:0,y:0,z:0};b.stunned=0;b.grounded=true;
 }
 
 function buildHill(){
-const mesh=sMesh(new THREE.CylinderGeometry(12,14,8,28),mat(0xFFD700,.35));
+const mesh=sMesh(new THREE.CylinderGeometry(16,20,10,32),mat(0xFFD700,.35));
 mesh.position.y=4;mesh.castShadow=true;mesh.receiveShadow=true;
 scene.add(mesh);gameMeshes.push(mesh);
 hillMesh={mesh,radius:14,topY:8};
@@ -939,7 +939,7 @@ function buildPadGrid(){
 const sz=4,sp=12,off=-(sz-1)*sp/2;
 for(let x=0;x<sz;x++){
 for(let z=0;z<sz;z++){
-const pad=sMesh(new THREE.CylinderGeometry(4,4.3,1.2,16),mat(0x9C27B0,.35));
+const pad=sMesh(new THREE.CylinderGeometry(6,6.5,1.5,16),mat(0x9C27B0,.35));
 pad.position.set(off+x*sp,.6,off+z*sp);
 pad.userData={active:true,idx:x*sz+z};
 scene.add(pad);gameMeshes.push(pad);pads.push(pad);
