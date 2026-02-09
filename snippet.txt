@@ -1,0 +1,7 @@
+  const fs=$('resFriends')||document.createElement('div'); fs.id='resFriends'; fs.className='res-friends'; fs.innerHTML='<h3>Add Friends</h3>'; scores.filter(s=>!s.isPlayer).slice(0,5).forEach(b=>{
+    const isF=P.friends.some(f=>f.name===b.name);
+    const btn=document.createElement('button'); btn.className='btn-friend'+(isF?' friend':'');
+    btn.innerHTML=(isF?'✅ ':'➕ ')+b.name;
+    btn.onclick=()=>{ if(!P.friends.some(f=>f.name===b.name)){ P.friends.push({name:b.name,charId:b.charId}); btn.classList.add('friend'); btn.innerHTML='✅ '+b.name; saveData(); } };
+    fs.appendChild(btn);
+  }); if(!$('#resFriends')) $('RES').appendChild(fs);
