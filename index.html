@@ -381,7 +381,7 @@ sun=new THREE.DirectionalLight(0xfff5e0, P.preset === 'deluxe' ? 1.8 : 1.1);
 sun.position.set(80,120,80);
 if(P.settings.shadows){
   sun.castShadow=true;
-  const s=sun.shadow; s.mapSize.width=s.mapSize.height=(P.preset === 'deluxe' ? 2048 : 2048);
+  const s=sun.shadow; s.mapSize.width=s.mapSize.height=(P.preset === 'deluxe' ? 4096 : 2048);
   s.camera.near=20; s.camera.far=400; s.camera.left=s.camera.bottom=-120; s.camera.right=s.camera.top=120;
 }
 scene.add(sun);
