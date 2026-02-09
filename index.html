@@ -180,6 +180,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 .p-deluxe { background: #f1c40f; color: #000; }
 .friend-btn { padding: 4px 8px; background: #2ecc71; color: white; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; }
 .friend-btn.added { background: #7f8c8d; }
+.acc-large { transform: scale(1.2); transform-origin: top left; } .acc-large-r { transform: scale(1.2); transform-origin: top right; }
 </style>
 </head>
 <body>
@@ -194,7 +195,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
       <p>Configure your experience</p>
     </div>
     <div class="box-body">
-      <div class="preset-buttons">
+      <div style="display:flex; margin-bottom:15px;">
         <button class="preset-btn p-classic" onclick="setPreset('classic')">Classic</button>
         <button class="preset-btn p-hd" onclick="setPreset('hd')">HD</button>
         <button class="preset-btn p-deluxe" onclick="setPreset('deluxe')">Deluxe HD</button>
@@ -222,6 +223,14 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
       <div class="setting-row">
         <label>Left Hand Mode</label>
         <input type="checkbox" id="sLeft" onchange="updSet()">
+      <div class="setting-row">
+        <label>Accessibility: Large UI</label>
+        <input type="checkbox" id="sAcc" onchange="updSet()">
+      </div>
+      <div class="setting-row">
+        <label>Debug: Show FPS</label>
+        <input type="checkbox" id="sDebug" onchange="updSet()">
+      </div>
       </div>
     </div>
   </div>
@@ -229,6 +238,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 
 <div class="ld" id="LD"><div class="ld-logo" id="ldLogo">🌀</div><div class="ld-title">RIFT RUCKUS</div><div class="ld-sub" id="ldSub">RIFT EDITION</div><div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div></div>
 <canvas id="C"></canvas>
+<div id="fps" style="position:fixed;top:10px;right:10px;color:white;font-family:monospace;z-index:2000;display:none;"></div>
 <div id="hud">
 <div class="hud-top">
 <div class="panel player-info"><div class="avatar" id="hAvatar">😎</div><div><div class="pname" id="hName">Player</div><div class="plevel">Lv.<span id="hLv">1</span></div></div></div>
@@ -259,6 +269,18 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 <div class="overlay" id="oChar"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oChar')">×</button><div class="box-head"><h2>🎭 Runner</h2><p>Choose character</p></div><div class="box-body"><div class="cg" id="charGrid"></div><div class="cp" id="charPrev"></div></div></div></div>
 <div class="overlay" id="oArcade"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oArcade')">×</button><div class="box-head"><h2>🕹️ Practice</h2><p>Choose game</p></div><div class="box-body"><div class="ag" id="arcGrid"></div></div></div></div>
 
+<div class="overlay" id="oSocial">
+  <div class="box">
+    <div class="box-head">
+      <button class="close-btn" onclick="hide('oSocial')">×</button>
+      <h2>Friends & Social</h2>
+      <p>Invite your friended bots!</p>
+    </div>
+    <div class="box-body" id="socialList">
+    </div>
+  </div>
+</div>
+
 <div class="ghud" id="GHUD"><div class="g-title" id="gTitle">Game</div><div class="g-time" id="gTime">60</div></div>
 <div class="g-tip" id="gTip"></div>
 <div class="sb" id="SB"><div class="sb-h">Standings</div><div class="sb-b" id="sbBody"></div></div>
@@ -288,7 +310,8 @@ const CHARS=[
 {id:'tank',name:'Harold',emoji:'🦣',role:'Tank',color:0x795548,spd:45,pow:95,jmp:40,skill:'Quake',sType:'stun',sCD:8},
 {id:'sally',name:'Sally',emoji:'🐍',role:'Speed',color:0x26A69A,spd:95,pow:45,jmp:75,skill:'Dash',sType:'dash',sCD:4},
 {id:'blob',name:'Blobby',emoji:'🟣',role:'Jump',color:0xEC407A,spd:65,pow:55,jmp:99,skill:'Bounce',sType:'jump',sCD:3},
-{id:'santa',name:'Santa',emoji:'🎅',role:'All',color:0xE74C3C,spd:70,pow:70,jmp:70,skill:'Gift',sType:'buff',sCD:10}
+{id:'santa',name:'Santa',emoji:'🎅',role:'All',color:0xE74C3C,spd:70,pow:70,jmp:70,skill:'Gift',sType:'buff',sCD:10},
+{id:'ninja',name:'Ninja',emoji:'🥷',role:'Stealth',color:0x212121,spd:85,pow:60,jmp:90,skill:'Smoke',sType:'smoke',sCD:6}
 ];
 
 const GAMES=[
@@ -299,10 +322,15 @@ const GAMES=[
 {id:'pads',name:'🪑 Musical Pads',tip:'Stand on GREEN pad when music stops!',dur:70,type:'pads'}
 ];
 
-const IS_DEC = new Date().getMonth() === 11;
+
+const month = new Date().getMonth();
+const IS_DEC = month === 11;
+const IS_OCT = month === 9;
+const IS_SPRING = month >= 2 && month <= 4;
+
 if(IS_DEC){
   const ll=$('ldLogo'); if(ll)ll.textContent='🎄';
-  const ls=$('ldSub'); if(ls)ls.textContent='HOLIDAY EDITION';
+  const ls=$('ldSub'); if(ls)ls.textContent = IS_DEC ? 'HOLIDAY EDITION' : (IS_OCT ? 'HALLOWEEN EDITION' : (IS_SPRING ? 'SPRING EDITION' : 'RIFT EDITION'));
 }
 const EMOTES=['😄','🎄','🎅','⛄','🎁','❄️','🔥','💪'];
 
@@ -312,40 +340,39 @@ let state=ST.LOAD;
 
 let P={gems:500,crowns:10,charId:'glitch',score:0,isIt:false,tagImmune:0,
 skillCD:0,grabCD:0,stunned:0,stamina:100,sprinting:false,hillTime:0,lv:1,xp:0,buffTime:0,
-friends:[], preset:'hd', settings:{shadows:true, ai:'medium', leftHand:false}};
+friends:[], invited:[], preset:'hd', settings:{shadows:true, ai:'medium', leftHand:false}};
 
 function saveData(){
   localStorage.setItem('RR_DATA', JSON.stringify({
     gems: P.gems, crowns: P.crowns, lv: P.lv, xp: P.xp, charId: P.charId,
-    friends: P.friends, preset: P.preset, settings: P.settings
+    friends: P.friends, invited: P.invited, preset: P.preset, settings: P.settings
   }));
 }
 
 function loadData(){
   const d = localStorage.getItem('RR_DATA');
   if(d){
-    try {
-      const j = JSON.parse(d);
-      Object.assign(P, j);
-      setText('hGems', P.gems);
-      setText('hLv', P.lv);
-      if(P.settings.leftHand) {
-        $('joyL').style.left='auto'; $('joyL').style.right='18px';
-        $('joyR').style.right='auto'; $('joyR').style.left='18px';
-        $('BTNS').style.right='auto'; $('BTNS').style.left='14px';
-      }
-    } catch (e) {
-      console.error('Failed to load data from localStorage:', e);
-      localStorage.removeItem('RR_DATA'); // Clear corrupted data
+    const j = JSON.parse(d);
+    Object.assign(P, j);
+    setText('hGems', P.gems);
+    setText('hLv', P.lv);
+if(P.settings.acc) { document.documentElement.style.fontSize = "18px"; }
+    if(P.settings.leftHand) {
+      $('joyL').style.left='auto'; $('joyL').style.right='18px';
+      $('joyR').style.right='auto'; $('joyR').style.left='18px';
+      $('BTNS').style.right='auto'; $('BTNS').style.left='14px';
     }
   }
+}
 
 let selChar='glitch';
 let scene,cam,ren,clk,sun;
+const BOT_NAMES=['Zippy','Bouncer','Sparky','Glimmer','Turbo','RiftRunner','Echo','Nova','Pixel','Glitchy','Tanker','Frosty','Shadow','Blaze','Bolt','Aura','Rusty','Comet','Pulse','Zen'];
 var player,bots=[],lobbyMeshes=[],gameMeshes=[],stars=[],pads=[];
 let solidPlatforms=[]; // {mesh, radius, topY}
 let hillMesh=null; // {mesh, radius, topY}
 let interacts=[];
+stars=[];pads=[];
 const joy={l:{x:0,y:0},r:{x:0,y:0}};
 let camAng=0,pVel={x:0,y:0,z:0},grounded=true,near=null;
 let curGame=null,gTimer=0,gActive=false,rGames=[],rIdx=0;
@@ -363,7 +390,12 @@ function curC(){return getC(P.charId);}
 
 function initThree(){
 scene=new THREE.Scene();
-const skyCol = P.preset === 'deluxe' ? 0xFFB74D : (IS_DEC ? 0x0a1a2a : 0x1a2a4a);
+
+let skyCol = 0x1a2a4a;
+if(P.preset === 'deluxe') skyCol = 0xFFB74D;
+else if(IS_DEC) skyCol = 0x0a1a2a;
+else if(IS_OCT) skyCol = 0x0d0208; // Deep spooky purple/black
+else if(IS_SPRING) skyCol = 0x81D4FA; // Light blue
 scene.background=new THREE.Color(skyCol);
 scene.fog=new THREE.FogExp2(skyCol, P.preset === 'deluxe' ? .008 : .005);
 cam=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,800);
@@ -381,7 +413,7 @@ sun=new THREE.DirectionalLight(0xfff5e0, P.preset === 'deluxe' ? 1.8 : 1.1);
 sun.position.set(80,120,80);
 if(P.settings.shadows){
   sun.castShadow=true;
-  const s=sun.shadow; s.mapSize.width=s.mapSize.height=(P.preset === 'deluxe' ? 4096 : 2048);
+  const s=sun.shadow; s.mapSize.width=s.mapSize.height=(P.preset === 'deluxe' ? 2048 : 2048);
   s.camera.near=20; s.camera.far=400; s.camera.left=s.camera.bottom=-120; s.camera.right=s.camera.top=120;
 }
 scene.add(sun);
@@ -426,6 +458,12 @@ if(ch.id==='glitch'){ // Panda style
     const ear=sMesh(new THREE.ConeGeometry(.15,.3,4),mat(col));
     ear.position.set(s*.22,2.15,0); ear.rotation.z=-s*0.3; g.add(ear);
   });
+
+} else if(ch.id==='ninja'){ // Ninja style
+  const mask=sMesh(new THREE.BoxGeometry(.7,.3,.4),mat(0x111111));
+  mask.position.set(0,1.85,.2); g.add(mask);
+  const band=sMesh(new THREE.BoxGeometry(.8,.1,.45),mat(0x212121));
+  band.position.set(0,2,.2); g.add(band);
 } else if(ch.id==='santa'){ // Piggy style
   const snout=sMesh(new THREE.CylinderGeometry(.12,.12,.1,12),mat(0xFFA07A));
   snout.position.set(0,1.82,.35); snout.rotation.x=Math.PI/2; g.add(snout);
@@ -469,59 +507,142 @@ function addLobbyDeco(){
     }
   }
 }
+
+function loadSocial(){
+  const el=$('socialList'); if(!el)return;
+  el.innerHTML='';
+  if(P.friends.length === 0) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;">No friends yet. Add bots after a game!</div>';
+    return;
+  }
+  P.friends.forEach(name => {
+    const isInv = P.invited.includes(name);
+    const row = document.createElement('div');
+    row.className = 'mc';
+    row.style.justifyContent = 'space-between';
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="cc-av" style="background:#888;width:32px;height:32px;font-size:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;">🤖</div>
+        <span>${name}</span>
+      </div>
+      <button class="friend-btn ${isInv?'added':''}" onclick="toggleInvite('${name}', this)">${isInv?'Invited ✅':'Invite'}</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function toggleInvite(name, btn){
+  const idx = P.invited.indexOf(name);
+  if(idx > -1) {
+    P.invited.splice(idx, 1);
+    btn.textContent = 'Invite'; btn.classList.remove('added');
+  } else {
+    if(P.invited.length >= 8) { notify('Max 8 invited bots!','bad'); return; }
+    P.invited.push(name);
+    btn.textContent = 'Invited ✅'; btn.classList.add('added');
+  }
+  saveData();
+}
+
+
 function buildLobby(){
-lobbyMeshes.forEach(o=>scene.remove(o)); lobbyMeshes=[];
-gameMeshes.forEach(o=>scene.remove(o)); gameMeshes=[];
-interacts=[];
-solidPlatforms=[];
-if(IS_DEC){
-const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0xE8F4F8,.8));
-gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
-const plazaR=18,plazaH=3;
-const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR+2,plazaH,32),mat(0x6D4C41,.5));
-plaza.position.y=plazaH/2;addMesh(plaza,true);
-solidPlatforms.push({mesh:plaza,radius:plazaR+2,topY:plazaH});
-buildXmasTree(0,plazaH,0);
-buildPortal(0,0,-42); buildMirror(42,0,0); buildArcade(-42,0,0);
-for(let i=0;i<30;i++){ const a=(i/30)*Math.PI*2+rnd(-.2,.2),r=55+rnd(0,45); buildPine(Math.cos(a)*r,Math.sin(a)*r); }
-for(let i=0;i<8;i++){ const a=rnd(0,Math.PI*2),r=30+rnd(0,35); buildSnowman(Math.cos(a)*r,Math.sin(a)*r); }
-for(let i=0;i<15;i++){ const a=rnd(0,Math.PI*2),r=24+rnd(0,50); buildPresent(Math.cos(a)*r,Math.sin(a)*r); }
-for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2,r=30; buildLamp(Math.cos(a)*r,Math.sin(a)*r); }
-}else{
-const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x388E3C));
-gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
-const plazaR=20,plazaH=1.5;
-const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0xCFD8DC));
-plaza.position.y=plazaH/2;addMesh(plaza,true);
-solidPlatforms.push({mesh:plaza,radius:plazaR,topY:plazaH});
-// Fountain
-const f=new THREE.Group(); f.position.set(0,plazaH,0);
-const fBase=sMesh(new THREE.CylinderGeometry(5,5,0.8,24),mat(0x90A4AE)); fBase.position.y=0.4; f.add(fBase);
-const fMid=sMesh(new THREE.CylinderGeometry(1,1,3,16),mat(0x90A4AE)); fMid.position.y=2; f.add(fMid);
-const fTop=sMesh(new THREE.CylinderGeometry(3,3,0.4,16),mat(0x90A4AE)); fTop.position.y=3.5; f.add(fTop);
-const water=sMesh(new THREE.SphereGeometry(2.5,16,12,0,Math.PI*2,0,Math.PI/2),mat(0x29B6F6,.6));
-water.position.y=3.5; f.add(water);
-const lt=new THREE.PointLight(0x29B6F6,2,25); lt.position.y=5; f.add(lt);
-addMesh(f,true);
-buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0);
-for(let i=0;i<40;i++){
-const a=(i/40)*Math.PI*2+rnd(-.1,.1), r=45+rnd(0,55);
-const x=Math.cos(a)*r, z=Math.sin(a)*r;
-if(Math.random()>0.4){
-const h=rnd(6,15);
-const tree=new THREE.Group(); tree.position.set(x,0,z);
-const tr=sMesh(new THREE.CylinderGeometry(.4,.6,h*.3,8),mat(0x5D4037)); tr.position.y=h*.15; tree.add(tr);
-const leaf=sMesh(new THREE.ConeGeometry(rnd(3,5),h*.8,8),mat(0x2E7D32)); leaf.position.y=h*.5; tree.add(leaf);
-addMesh(tree,true);
-} else {
-const rock=sMesh(new THREE.DodecahedronGeometry(rnd(2,4)),mat(0x9E9E9E));
-rock.position.set(x,1,z); rock.rotation.set(rnd(0,6),rnd(0,6),rnd(0,6)); addMesh(rock,true);
-}
-}
-}
+  lobbyMeshes.forEach(o=>scene.remove(o)); lobbyMeshes=[];
+  gameMeshes.forEach(o=>scene.remove(o)); gameMeshes=[];
+  interacts=[];
+  stars=[];pads=[];
+  solidPlatforms=[];
+  if(IS_DEC) buildDecLobby();
+  else if(IS_OCT) buildOctLobby();
+  else if(IS_SPRING) buildSpringLobby();
+  else buildDefaultLobby();
 }
 
+function buildOctLobby(){
+  const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x1a0a00));
+  gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+  const plazaR=20,plazaH=1.5;
+  const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0x3e2723));
+  plaza.position.y=plazaH/2;addMesh(plaza,true);
+  solidPlatforms.push({mesh:plaza,radius:plazaR,topY:plazaH});
 
+  // Big Pumpkin
+  const p=new THREE.Group(); p.position.set(0,plazaH,0);
+  const pBody=sMesh(new THREE.SphereGeometry(4,16,12),mat(0xff6d00, .2)); pBody.scale.y=0.8; pBody.position.y=3; p.add(pBody);
+  const pStem=sMesh(new THREE.CylinderGeometry(0.3,0.5,1.5,8),mat(0x1b5e20)); pStem.position.y=6; p.add(pStem);
+  const lt=new THREE.PointLight(0xffab40,3,30); lt.position.y=4; p.add(lt);
+  addMesh(p,true);
+
+  buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0); buildSocial(0,0,45);
+  for(let i=0;i<40;i++){
+    const a=(i/40)*Math.PI*2, r=45+rnd(0,55);
+    const x=Math.cos(a)*r, z=Math.sin(a)*r;
+    const jack=sMesh(new THREE.SphereGeometry(rnd(1,2),12,10),mat(0xff6d00)); jack.position.set(x,1,z); addMesh(jack,true);
+  }
+}
+
+function buildSpringLobby(){
+  const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x66bb6a));
+  gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+  const plazaR=20,plazaH=1.5;
+  const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0xfff176));
+  plaza.position.y=plazaH/2;addMesh(plaza,true);
+  solidPlatforms.push({mesh:plaza,radius:plazaR,topY:plazaH});
+
+  buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0); buildSocial(0,0,45);
+  for(let i=0;i<60;i++){
+    const a=rnd(0,Math.PI*2), r=30+rnd(0,70);
+    const flower=sMesh(new THREE.CircleGeometry(0.5,6),mat(rnd(0,1)>0.5?0xff4081:0x00e5ff));
+    flower.position.set(Math.cos(a)*r, 0.05, Math.sin(a)*r); flower.rotation.x=-Math.PI/2; addMesh(flower,true);
+  }
+}
+
+function buildDecLobby(){
+  const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0xE8F4F8,.8));
+  gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+  const plazaR=18,plazaH=3;
+  const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR+2,plazaH,32),mat(0x6D4C41,.5));
+  plaza.position.y=plazaH/2;addMesh(plaza,true);
+  solidPlatforms.push({mesh:plaza,radius:plazaR+2,topY:plazaH});
+  buildXmasTree(0,plazaH,0);
+  buildPortal(0,0,-42); buildMirror(42,0,0); buildArcade(-42,0,0); buildSocial(0,0,42);
+  for(let i=0;i<30;i++){ const a=(i/30)*Math.PI*2+rnd(-.2,.2),r=55+rnd(0,45); buildPine(Math.cos(a)*r,Math.sin(a)*r); }
+  for(let i=0;i<8;i++){ const a=rnd(0,Math.PI*2),r=30+rnd(0,35); buildSnowman(Math.cos(a)*r,Math.sin(a)*r); }
+  for(let i=0;i<15;i++){ const a=rnd(0,Math.PI*2),r=24+rnd(0,50); buildPresent(Math.cos(a)*r,Math.sin(a)*r); }
+  for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2,r=30; buildLamp(Math.cos(a)*r,Math.sin(a)*r); }
+}
+
+function buildDefaultLobby(){
+  const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x388E3C));
+  gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+  const plazaR=20,plazaH=1.5;
+  const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0xCFD8DC));
+  plaza.position.y=plazaH/2;addMesh(plaza,true);
+  solidPlatforms.push({mesh:plaza,radius:plazaR,topY:plazaH});
+  const f=new THREE.Group(); f.position.set(0,plazaH,0);
+  const fBase=sMesh(new THREE.CylinderGeometry(5,5,0.8,24),mat(0x90A4AE)); fBase.position.y=0.4; f.add(fBase);
+  const fMid=sMesh(new THREE.CylinderGeometry(1,1,3,16),mat(0x90A4AE)); fMid.position.y=2; f.add(fMid);
+  const fTop=sMesh(new THREE.CylinderGeometry(3,3,0.4,16),mat(0x90A4AE)); fTop.position.y=3.5; f.add(fTop);
+  const water=sMesh(new THREE.SphereGeometry(2.5,16,12,0,Math.PI*2,0,Math.PI/2),mat(0x29B6F6,.6));
+  water.position.y=3.5; f.add(water);
+  const lt=new THREE.PointLight(0x29B6F6,2,25); lt.position.y=5; f.add(lt);
+  addMesh(f,true);
+  addLobbyDeco();
+  buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0); buildSocial(0,0,45);
+  for(let i=0;i<40;i++){
+    const a=(i/40)*Math.PI*2+rnd(-.1,.1), r=45+rnd(0,55);
+    const x=Math.cos(a)*r, z=Math.sin(a)*r;
+    if(Math.random()>0.4){
+      const h=rnd(6,15);
+      const tree=new THREE.Group(); tree.position.set(x,0,z);
+      const tr=sMesh(new THREE.CylinderGeometry(.4,.6,h*.3,8),mat(0x5D4037)); tr.position.y=h*.15; tree.add(tr);
+      const leaf=sMesh(new THREE.ConeGeometry(rnd(3,5),h*.8,8),mat(0x2E7D32)); leaf.position.y=h*.5; tree.add(leaf);
+      addMesh(tree,true);
+    } else {
+      const rock=sMesh(new THREE.DodecahedronGeometry(rnd(2,4)),mat(0x9E9E9E));
+      rock.position.set(x,1,z); rock.rotation.set(rnd(0,6),rnd(0,6),rnd(0,6)); addMesh(rock,true);
+    }
+  }
+}
 function buildXmasTree(x,y,z){
 const g=new THREE.Group();g.position.set(x,y,z);
 const trunk=sMesh(new THREE.CylinderGeometry(1,1.5,3,10),mat(0x5D4037,.8));
@@ -541,6 +662,16 @@ orb.position.set(Math.cos(a)*r,h,Math.sin(a)*r);g.add(orb);
 scene.add(g);lobbyMeshes.push(g);
 }
 
+
+function buildSocial(x,y,z){
+  const g=new THREE.Group(); g.position.set(x,0,z);
+  const base=sMesh(new THREE.CylinderGeometry(4,4.5,1,24),mat(0x27ae60)); g.add(base);
+  const ring=sMesh(new THREE.TorusGeometry(3.5,0.3,12,32),mat(0x2ecc71)); ring.rotation.x=Math.PI/2; ring.position.y=0.5; g.add(ring);
+  const ico=sMesh(new THREE.IcosahedronGeometry(1.5,0),mat(0xffffff,.2)); ico.position.y=4.5; ico.userData.spin=true; ico.userData.bob=true; ico.userData.baseY=4.5; g.add(ico);
+  const lt=new THREE.PointLight(0x2ecc71,2,15); lt.position.y=4; g.add(lt);
+  g.userData={type:'social', icon:'👥', text:'Friends'};
+  addMesh(g,true); interacts.push(g);
+}
 function buildPortal(x,y,z){
 const g=new THREE.Group();g.position.set(x,y,z);
 for(let i=0;i<3;i++){
@@ -640,30 +771,44 @@ player.position.set(0,3.5,22);
 scene.add(player);
 }
 
+
+
 function spawnBots(n){
-bots.forEach(b=>scene.remove(b.mesh));bots=[];
-const pool=CHARS.filter(c=>c.id!==P.charId);
-for(let i=0;i<n;i++){
-const ch=pool[i%pool.length];
-const mesh=makeChar(ch,true);
-const a=((i+1)/(n+1))*Math.PI*2,r=24+rnd(0,10);
-mesh.position.set(Math.cos(a)*r,0,Math.sin(a)*r);
-bots.push({
-mesh,ch,name:ch.name,emoji:ch.emoji,color:ch.color,
-score:0,isIt:false,tagImmune:0,stunned:0,
-vel:{x:0,y:0,z:0},grounded:true,eliminated:false,
-hillTime:0,target:null,aiTimer:0
-});
-scene.add(mesh);
+  bots.forEach(b=>scene.remove(b.mesh)); bots=[];
+  const pool=CHARS.filter(c=>c.id!==P.charId);
+
+  const names = [...P.invited];
+  while(names.length < n){
+    const rn = BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)];
+    if(!names.includes(rn)) names.push(rn);
+  }
+  const botChars = [];
+  for(let i=0; i<n; i++) botChars.push(pool[Math.floor(Math.random()*pool.length)]);
+
+  for(let i=0; i<n; i++){
+    const ch=botChars[i];
+    const name=names[i];
+    const mesh=makeChar(ch,true);
+    const a=((i+1)/(n+1))*Math.PI*2,r=24+rnd(0,10);
+    mesh.position.set(Math.cos(a)*r,0,Math.sin(a)*r);
+    bots.push({
+      mesh, ch, name, emoji:ch.emoji, color:ch.color,
+      score:0, isIt:false, tagImmune:0, stunned:0,
+      vel:{x:0,y:0,z:0}, grounded:true, eliminated:false,
+      hillTime:0, target:null, aiTimer:0,
+      mem: { bad: [] }
+    });
+    scene.add(mesh);
+  }
 }
-}
+
 
 // ========== GROUND / PHYSICS ==========
 // THE key fix: ONE function determines ground height, no bouncing ever
 function getGroundY(pos){
 let gy=0;
 // Lobby solids
-if(true){ // Check solids always
+if(state===ST.LOBBY){
 solidPlatforms.forEach(sp=>{
 const d=d2(pos,sp.mesh.position);
 if(d<sp.radius) gy=Math.max(gy,sp.topY);
@@ -782,8 +927,8 @@ function doPush(){
   if(pushed) { flash('bGrab', 200); mkParts(player.position.x, 1.5, player.position.z, 0xffffff, 10); }
 }
 function doGrab(){ doPush(); } // Legacy call support
-
 function doSkill(){
+
 if(P.skillCD>0||P.stunned>0)return;
 if(state!==ST.GAME&&state!==ST.LOBBY)return;
 const c=curC();
@@ -820,6 +965,12 @@ case'stun':
   };
   rAni();
   break;
+case'smoke':
+  mkParts(player.position.x,1.5,player.position.z,0x333333,50);
+  bots.forEach(b=>{if(d3(player.position,b.mesh.position)<10){b.stunned=2;showEmoji(b.mesh,'❓');}});
+  player.visible = false;
+  setTimeout(()=>player.visible=true, 3000);
+  break;
 case'buff':
   P.buffTime=5;
   notify('POWER UP!','ok');
@@ -846,6 +997,7 @@ const t=near.userData.type;
 if(t==='portal'){show('oPortal');loadModes();}
 else if(t==='char'){show('oChar');loadChars();}
 else if(t==='arcade'){show('oArcade');loadArcade();}
+else if(t==='social'){show('oSocial');loadSocial();}
 $('PROMPT')?.classList.remove('show');
 }
 
@@ -934,7 +1086,7 @@ setTimeout(()=>f.remove(),9000);
 function updSet(){
   P.settings.shadows = $('sShadow').checked;
   P.settings.ai = $('sAI').value;
-  P.settings.leftHand = $('sLeft').checked;
+  P.settings.leftHand = $('sLeft').checked; P.settings.acc = $('sAcc').checked; P.settings.debug = $('sDebug').checked;
   P.preset = $('sGraph').value;
   saveData();
   // Apply immediately or reload
@@ -1077,7 +1229,7 @@ gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;addMesh(gnd,false);
 const bor=sMesh(new THREE.TorusGeometry(R,1.5,10,60),mat(0xFFD700,.4));
 bor.rotation.x=Math.PI/2;bor.position.y=.75;addMesh(bor,false);
 // Game-specific
-if(game.type==='collect')for(let i=0;i<55;i++)spawnStar();
+if(game.type==='collect'){for(let i=0;i<55;i++)spawnStar();for(let i=0;i<5;i++){ const a=(i/5)*Math.PI*2, r=40, x=Math.cos(a)*r, z=Math.sin(a)*r; const p=sMesh(new THREE.CylinderGeometry(8,8,4,16),mat(0x1B5E20)); p.position.set(x,2,z); addMesh(p,false); solidPlatforms.push({mesh:p,radius:8,topY:4}); }}
 if(game.type==='hill'){
 buildHill();
 for(let i=0;i<4;i++){ const a=(i/4)*Math.PI*2, r=40, x=Math.cos(a)*r, z=Math.sin(a)*r; const p=sMesh(new THREE.CylinderGeometry(8,8,4,16),mat(0xBF360C)); p.position.set(x,2,z); addMesh(p); solidPlatforms.push({mesh:p,radius:8,topY:4}); }
@@ -1103,7 +1255,7 @@ function buildHill(){
 const mesh=sMesh(new THREE.CylinderGeometry(16,20,10,32),mat(0xFFD700,.35));
 mesh.position.y=4;mesh.castShadow=true;mesh.receiveShadow=true;
 scene.add(mesh);gameMeshes.push(mesh);
-hillMesh={mesh,radius:14,topY:8};
+hillMesh={mesh,radius:15.5,topY:9};
 const crown=sMesh(new THREE.ConeGeometry(3,4,5),mat(0xFFD700,.2));
 crown.position.y=11;crown.userData.spin=true;crown.userData.bob=true;crown.userData.baseY=11;
 scene.add(crown);gameMeshes.push(crown);
@@ -1117,6 +1269,7 @@ const pad=sMesh(new THREE.CylinderGeometry(6,6.5,1.5,16),mat(0x9C27B0,.35));
 pad.position.set(off+x*sp,.6,off+z*sp);
 pad.userData={active:true,idx:x*sz+z};
 scene.add(pad);gameMeshes.push(pad);pads.push(pad);
+solidPlatforms.push({mesh:pad,radius:6,topY:1.35});
 }
 }
 }
@@ -1171,7 +1324,7 @@ const val=gold?30:10;
 const shape=new THREE.Shape();
 for(let i=0;i<10;i++){const r=i%2===0?.8:.38,a=(i/10)*Math.PI*2-Math.PI/2;if(i===0)shape.moveTo(Math.cos(a)*r,Math.sin(a)*r);else shape.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
 shape.closePath();
-const mesh=sMesh(new THREE.ExtrudeGeometry(shape,{depth:.35,bevelEnabled:false}),mat(gold?0xFFD700:0xFFFF00,.3));
+const mesh=sMesh(new THREE.ExtrudeGeometry(shape,{depth:.35,bevelEnabled:false}),gold ? new THREE.MeshStandardMaterial({color:0xFFD700, metalness:0.8, roughness:0.2}) : mat(0xFFFFFF, 0.3));
 if(gold)mesh.scale.setScalar(1.5);
 const a=rnd(0,Math.PI*2),r=rnd(10,60);
 mesh.position.set(Math.cos(a)*r,2.5,Math.sin(a)*r);
@@ -1189,6 +1342,7 @@ bots.forEach((b,idx)=>{
 if(b.eliminated){b.mesh.visible=true;return;}
 if(b.stunned>0){b.stunned-=dt;return;}
 if(b.tagImmune>0)b.tagImmune-=dt;
+if(b.grounded && Math.random() < 0.01) { b.vel.y = 0.22; b.grounded = false; }
 
 // Learning: Check if fell
 if(b.mesh.position.y < -5) {
@@ -1199,9 +1353,6 @@ if(b.mesh.position.y < -5) {
 
 b.aiTimer-=dt;
 if(b.aiTimer<=0){
-b.aiTimer=rnd(.3,1);
-// AI Logic...
-
 b.aiTimer=rnd(.3,1);
 if(curGame?.type==='collect'){
 let best=null,bestD=Infinity;
@@ -1232,13 +1383,20 @@ else{const o=bots.filter(x=>x!==b&&!x.eliminated);if(o.length){const t=o[Math.fl
 }else b.target={x:rnd(-35,35),z:rnd(-35,35)};
 }
 if(b.target){
-const dx=b.target.x-b.mesh.position.x,dz=b.target.z-b.mesh.position.z,dd=Math.sqrt(dx*dx+dz*dz);
-if(dd>1.2){
-const s=spd_base*(b.ch.spd/80);
-b.mesh.position.x+=(dx/dd)*s;
-b.mesh.position.z+=(dz/dd)*s;
-b.mesh.rotation.y=Math.atan2(dx,dz);
-}
+  let tx=b.target.x, tz=b.target.z;
+  b.mem.bad.forEach(spot=>{
+    if(d2(b.mesh.position, spot) < 8){
+      const dx=b.mesh.position.x-spot.x, dz=b.mesh.position.z-spot.z, d=Math.sqrt(dx*dx+dz*dz)||1;
+      tx += (dx/d)*15; tz += (dz/d)*15;
+    }
+  });
+  const dx=tx-b.mesh.position.x,dz=tz-b.mesh.position.z,dd=Math.sqrt(dx*dx+dz*dz);
+  if(dd>1.2){
+    const s=spd_base*(b.ch.spd/80);
+    b.mesh.position.x+=(dx/dd)*s;
+    b.mesh.position.z+=(dz/dd)*s;
+    b.mesh.rotation.y=Math.atan2(dx,dz);
+  }
 }
 if(state===ST.GAME && !b.isIt && Math.random() < 0.02) {
   const targets = [player, ...bots.filter(o=>o!==b)];
@@ -1262,7 +1420,7 @@ else{b.mesh.position.x*=sumoR/bd;b.mesh.position.z*=sumoR/bd;}
 stars.forEach(s=>{
 if(!s.userData.taken&&d3(b.mesh.position,s.position)<3){
 s.userData.taken=true;scene.remove(s);b.score+=s.userData.val;
-if(state===ST.GAME) setTimeout(()=>spawnStar(),4000);
+if(state===ST.GAME && curGame?.type==='collect') setTimeout(()=>spawnStar(),4000);
 }
 });
 if(curGame?.type==='tag'&&b.isIt&&b.tagImmune<=0){
@@ -1281,13 +1439,11 @@ const hd=d2(b.mesh.position,{x:0,z:0});
 if(hd<hillMesh.radius&&b.mesh.position.y>=hillMesh.topY-.5){
 b.hillTime=(b.hillTime||0)+dt;
 if(b.hillTime>=1){b.score+=1;b.hillTime-=1;}
-if(b.hillTime>=5){ const a=rnd(0,Math.PI*2); b.vel.x+=Math.cos(a)*.5; b.vel.z+=Math.sin(a)*.5; b.vel.y=.25; b.hillTime=0; }
+if(b.hillTime>=5){ const a=rnd(0,Math.PI*2); b.vel.x+=Math.cos(a)*.5; b.vel.z+=Math.cos(a)*.5; b.vel.y=.25; b.hillTime=0; }
 }else b.hillTime=0;
 }
 });
 }
-
-
 
 function updateMinigame(dt){
 if(!gActive)return;
@@ -1309,7 +1465,7 @@ if(d3(player.position,s.position)<3){
 s.userData.taken=true;scene.remove(s);
 P.score+=s.userData.val;
 mkParts(s.position.x,s.position.y,s.position.z,0xFFD700,18);
-if(state===ST.GAME) setTimeout(()=>spawnStar(),4000);
+if(state===ST.GAME && curGame?.type==='collect') setTimeout(()=>spawnStar(),4000);
 }
 }
 });
@@ -1470,9 +1626,11 @@ scene.add(p);particles3d.push(p);
 // ========== MAIN LOOP ==========
 function animate(){
 requestAnimationFrame(animate);
+if(P.settings.debug){ const fpsEl=$("fps"); fpsEl.style.display="block"; fpsEl.textContent="FPS: "+Math.round(1/dt); }
 const dt=Math.min(clk.getDelta(),.05);
+if(P.grabCD>0)P.grabCD-=dt;if(P.skillCD>0)P.skillCD-=dt;
 const t=Date.now()*.001;
-if(true){ // Check solids always
+if(state===ST.LOBBY){
 // Player movement - smooth, no bounce
 const c=curC();
 const inp=joy.l;
