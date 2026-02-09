@@ -24,21 +24,20 @@ const path = require('path');
     }
   };
 
-  // Classic
+  const presets = ['classic', 'hd', 'deluxe'];
+
   await page.goto(url);
-  await page.evaluate(() => { localStorage.setItem('RR_DATA', JSON.stringify({preset:'classic'})); location.reload(); });
-  await page.waitForNavigation();
-  await capture('classic');
 
-  // HD
-  await page.evaluate(() => { localStorage.setItem('RR_DATA', JSON.stringify({preset:'hd'})); location.reload(); });
-  await page.waitForNavigation();
-  await capture('hd');
-
-  // Deluxe
-  await page.evaluate(() => { localStorage.setItem('RR_DATA', JSON.stringify({preset:'deluxe'})); location.reload(); });
-  await page.waitForNavigation();
-  await capture('deluxe');
+  for (const preset of presets) {
+    await page.evaluate((p) => {
+      const data = JSON.parse(localStorage.getItem('RR_DATA') || '{}');
+      data.preset = p;
+      localStorage.setItem('RR_DATA', JSON.stringify(data));
+      location.reload();
+    }, preset);
+    await page.waitForNavigation();
+    await capture(preset);
+  }
 
   await browser.close();
 })();
