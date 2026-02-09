@@ -324,17 +324,21 @@ function saveData(){
 function loadData(){
   const d = localStorage.getItem('RR_DATA');
   if(d){
-    const j = JSON.parse(d);
-    Object.assign(P, j);
-    setText('hGems', P.gems);
-    setText('hLv', P.lv);
-    if(P.settings.leftHand) {
-      $('joyL').style.left='auto'; $('joyL').style.right='18px';
-      $('joyR').style.right='auto'; $('joyR').style.left='18px';
-      $('BTNS').style.right='auto'; $('BTNS').style.left='14px';
+    try {
+      const j = JSON.parse(d);
+      Object.assign(P, j);
+      setText('hGems', P.gems);
+      setText('hLv', P.lv);
+      if(P.settings.leftHand) {
+        $('joyL').style.left='auto'; $('joyL').style.right='18px';
+        $('joyR').style.right='auto'; $('joyR').style.left='18px';
+        $('BTNS').style.right='auto'; $('BTNS').style.left='14px';
+      }
+    } catch (e) {
+      console.error('Failed to load data from localStorage:', e);
+      localStorage.removeItem('RR_DATA'); // Clear corrupted data
     }
   }
-}
 
 let selChar='glitch';
 let scene,cam,ren,clk,sun;
