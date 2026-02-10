@@ -7,43 +7,33 @@ const path = require('path');
 
   const url = 'file://' + path.resolve('index.html');
 
-  const capture = async (name, setupFn) => {
+  const capture = async (name, action) => {
     await page.goto(url);
-    if(setupFn) await page.evaluate(setupFn);
-    await page.waitForSelector('#LD.gone', { timeout: 15000 });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('#LD.gone', { timeout: 20000 });
+    if(action) await page.evaluate(action);
+    await page.waitForTimeout(1000);
     await page.screenshot({ path: 'gameplay/' + name + '.png' });
     console.log('Captured ' + name);
   };
 
-  // Deluxe HD (already verified but good to keep)
-  await capture('deluxe', () => { localStorage.setItem('RR_DATA', JSON.stringify({preset:'deluxe'})); });
+  // Main Lobby with new HUD
+  await capture('new_lobby_hud');
 
-  // Halloween
-  await capture('halloween', () => {
-    localStorage.setItem('RR_DATA', JSON.stringify({preset:'hd'}));
-    // Mock date to October
-    window.Date = class extends Date {
-      constructor() { super('2024-10-31'); }
-    };
-  });
+  // Character Select
+  await capture('new_char_select', () => show('oChar'));
 
-  // Spring
-  await capture('spring', () => {
-    window.Date = class extends Date {
-      constructor() { super('2024-04-15'); }
-    };
-  });
+  // Settings
+  await capture('new_settings', () => show('oSettings'));
 
-  // Social Menu
-  await capture('social_menu', async () => {
-     // Mock some friends
-     localStorage.setItem('RR_DATA', JSON.stringify({friends: ['Zippy', 'Sparky'], invited: ['Zippy']}));
+  // Modes
+  await capture('new_modes', () => { show('oPortal'); loadModes(); });
+
+  // Results
+  await capture('new_results', () => {
+    // Mock scores
+    P.score = 1250;
+    showResults();
   });
-  // Open social menu
-  await page.evaluate(() => { show('oSocial'); loadSocial(); });
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: 'gameplay/social_menu.png' });
 
   await browser.close();
 })();
