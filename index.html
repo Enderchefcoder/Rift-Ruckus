@@ -49,15 +49,18 @@
     #fps { position: fixed; top: 10px; right: 10px; color: #f2f20d; font-weight: 800; font-size: 12px; z-index: 1000; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 8px; }
 
     @media (max-width: 640px) {
-        #hud { padding: 1rem; }
-        #hud > div:first-child { scale: 0.8; transform-origin: left top; }
-        #hud > div:last-child { scale: 0.8; transform-origin: right top; }
-        .joy-area { width: 120px; height: 120px; bottom: 20px; }
-        .joy-knob { width: 50px; height: 50px; }
-        #BTNS { bottom: 20px; scale: 0.75; transform-origin: right bottom; gap: 0.5rem; }
-        #BTNS > div { gap: 0.5rem; }
-        #PROMPT { scale: 0.8; bottom: 180px; }
-        #SB { scale: 0.7; left: 10px; top: 100px; }
+        #hud { padding: 0.4rem; }
+        #hud > div:first-child { scale: 0.6; transform-origin: left top; }
+        #hud > div:last-child { scale: 0.6; transform-origin: right top; }
+        .joy-area { width: 80px; height: 80px; bottom: 10px; }
+        .joy-knob { width: 32px; height: 32px; }
+        #BTNS { bottom: 10px; scale: 0.55; transform-origin: right bottom; gap: 0.3rem; }
+        #BTNS > div { gap: 0.3rem; }
+        #bGrab, #bSkill { width: 70px !important; height: 70px !important; border-radius: 1.5rem !important; aspect-ratio: 1/1 !important; }
+        #bJump { width: 110px !important; height: 110px !important; border-radius: 2.5rem !important; aspect-ratio: 1/1 !important; }
+        #PROMPT { scale: 0.65; bottom: 100px; }
+        #SB { scale: 0.5; left: 5px; top: 60px; }
+        .overlay > div { scale: 0.85; }
     }
     .cd-num { font-size: 120px; font-weight: 900; color: #f2f20d; font-style: italic; text-shadow: 0 0 30px rgba(242,242,13,0.5); transform: scale(0); animation: cd-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     @keyframes cd-in { to { transform: scale(1); } }
@@ -90,6 +93,9 @@
             <span class='text-2xl drop-shadow-md'>💎</span>
             <span class='text-white font-black text-lg tracking-tighter' id='hGems'>0</span>
         </div>
+        <button id="social-btn" class="bg-white/10 backdrop-blur-2xl size-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:text-primary transition-all shadow-2xl active:scale-90" onclick="openSocial()">
+            <span class="material-symbols-outlined text-3xl">group</span>
+        </button>
         <button class='bg-white/10 backdrop-blur-2xl size-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:text-primary transition-all shadow-2xl active:scale-90' onclick='show("oSettings")'>
             <span class='material-symbols-outlined text-3xl'>settings</span>
         </button>
@@ -339,7 +345,7 @@
     function applyLayout() {
         const jL = $('joyL'), jR = $('joyR'), bt = $('BTNS'), side = $('SIDE');
         const isMob = window.innerWidth < 640;
-        const margin = isMob ? '20px' : '40px';
+        const margin = isMob ? '10px' : '40px';
         if (P.settings.leftHand) {
             if (jL) { jL.style.left = 'auto'; jL.style.right = margin; }
             if (jR) { jR.style.right = 'auto'; jR.style.left = margin; }
@@ -492,6 +498,7 @@
         a.addEventListener('mousedown', ev => { const r = a.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; upd(ev.clientX, ev.clientY); const mv = e => upd(e.clientX, e.clientY), up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); k.style.transform = 'translate(-50%,-50%)'; joy[key] = { x: 0, y: 0 }; }; document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up); });
     }
 
+function openSocial() { show("oSocial"); loadSocial(); }
     function doInteract() { if (!near) return; const t = near.userData.type; if (t === 'portal') { show('oPortal'); loadModes(); } else if (t === 'char') { show('oChar'); loadChars(); } else if (t === 'arcade') { show('oArcade'); loadArcade(); } else if (t === 'social') { show('oSocial'); loadSocial(); } $('PROMPT')?.classList.remove('show'); }
     function loadSocial(tab = 'friends') {
         const el = $('socialList'), tabs = $('socialTabs'); if (!el || !tabs) return;
