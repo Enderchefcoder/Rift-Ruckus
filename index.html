@@ -563,7 +563,16 @@ function openSocial() { show("oSocial"); loadSocial(); }
             case 'stun': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 12) { b.stunned = 2.5; b.vel.y = .22; mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFD700, 20); showEmoji(b.mesh, '💫'); } }); shakeAmt = .8; break;
             case 'smoke': mkParts(player.position.x, 1.5, player.position.z, 0x333333, 50); bots.forEach(b => { if (d3(player.position, b.mesh.position) < 10) { b.stunned = 2; showEmoji(b.mesh, '❓'); } }); player.visible = false; setTimeout(() => player.visible = true, 3000); break;
             case 'buff': P.buffTime = 5; notify('POWER UP!', 'ok'); flash('SPEED', 5000); mkParts(player.position.x, 2, player.position.z, 0xFF0000, 30); break;
-            case 'knock': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 8) { const dx = b.mesh.position.x - player.position.x, dz = b.mesh.position.z - player.position.z, m = Math.sqrt(dx*dx+dz*dz)||1; b.vel.x += (dx/m) * 1.5; b.vel.z += (dz/m) * 1.5; b.vel.y = 0.4; b.stunned = 1.5; mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFA726, 20); } }); shakeAmt = 0.5; break;
+            case 'knock':
+                bots.forEach(b => {
+                    if (d3(player.position, b.mesh.position) < 8) {
+                        const dx = b.mesh.position.x - player.position.x, dz = b.mesh.position.z - player.position.z, m = Math.sqrt(dx*dx+dz*dz)||1;
+                        b.vel.x += (dx/m) * 1.5; b.vel.z += (dz/m) * 1.5; b.vel.y = 0.4; b.stunned = 1.5;
+                        mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFA726, 20);
+                    }
+                });
+                shakeAmt = 0.5;
+                break;
         }
         notify(c.skill.toUpperCase() + '!', 'inf'); showEmoji(player, c.emoji);
     }
