@@ -300,14 +300,7 @@
 
     function flash(id, ms) { const e=$(id); if(e) { e.classList.add('on'); setTimeout(() => e.classList.remove('on'), ms); } }
 
-    const CHARS = [
-        {"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5},
-        {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8},
-        {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4},
-        {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3},
-        {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6},
-        {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}
-    ];
+    const CHARS = [{"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5}, {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8}, {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4}, {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3}, {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6}, {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}];
     const GAMES = [
         { id: 'stars', name: '⭐ STAR COLLECTOR', tip: 'COLLECT STARS! GOLD = 30 PTS!', dur: 50, type: 'collect' },
         { id: 'sumo', name: '💪 SUMO RING', tip: 'PUSH ENEMIES OUT OF THE RING!', dur: 55, type: 'sumo' },
@@ -570,16 +563,7 @@ function openSocial() { show("oSocial"); loadSocial(); }
             case 'stun': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 12) { b.stunned = 2.5; b.vel.y = .22; mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFD700, 20); showEmoji(b.mesh, '💫'); } }); shakeAmt = .8; break;
             case 'smoke': mkParts(player.position.x, 1.5, player.position.z, 0x333333, 50); bots.forEach(b => { if (d3(player.position, b.mesh.position) < 10) { b.stunned = 2; showEmoji(b.mesh, '❓'); } }); player.visible = false; setTimeout(() => player.visible = true, 3000); break;
             case 'buff': P.buffTime = 5; notify('POWER UP!', 'ok'); flash('SPEED', 5000); mkParts(player.position.x, 2, player.position.z, 0xFF0000, 30); break;
-            case 'knock':
-                bots.forEach(b => {
-                    if (d3(player.position, b.mesh.position) < 8) {
-                        const dx = b.mesh.position.x - player.position.x, dz = b.mesh.position.z - player.position.z, m = Math.sqrt(dx*dx+dz*dz)||1;
-                        b.vel.x += (dx/m) * 1.5; b.vel.z += (dz/m) * 1.5; b.vel.y = 0.4; b.stunned = 1.5;
-                        mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFA726, 20);
-                    }
-                });
-                shakeAmt = 0.5;
-                break;
+            case 'knock': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 8) { const dx = b.mesh.position.x - player.position.x, dz = b.mesh.position.z - player.position.z, m = Math.sqrt(dx*dx+dz*dz)||1; b.vel.x += (dx/m) * 1.5; b.vel.z += (dz/m) * 1.5; b.vel.y = 0.4; b.stunned = 1.5; mkParts(b.mesh.position.x, 1.5, b.mesh.position.z, 0xFFA726, 20); } }); shakeAmt = 0.5; break;
         }
         notify(c.skill.toUpperCase() + '!', 'inf'); showEmoji(player, c.emoji);
     }
