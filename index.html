@@ -300,7 +300,14 @@
 
     function flash(id, ms) { const e=$(id); if(e) { e.classList.add('on'); setTimeout(() => e.classList.remove('on'), ms); } }
 
-    const CHARS = [{"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5}, {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8}, {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4}, {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3}, {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6}, {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}];
+    const CHARS = [
+        {"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5},
+        {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8},
+        {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4},
+        {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3},
+        {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6},
+        {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}
+    ];
     const GAMES = [
         { id: 'stars', name: '⭐ STAR COLLECTOR', tip: 'COLLECT STARS! GOLD = 30 PTS!', dur: 50, type: 'collect' },
         { id: 'sumo', name: '💪 SUMO RING', tip: 'PUSH ENEMIES OUT OF THE RING!', dur: 55, type: 'sumo' },
