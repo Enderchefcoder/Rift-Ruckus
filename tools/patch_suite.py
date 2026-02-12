@@ -7,7 +7,7 @@ def apply_patch(filename, search, replace):
     with open(filename, 'r') as f:
         content = f.read()
     if search in content:
-        new_content = content.replace(search, replace)
+        new_content = content.replace(search, replace, 1)
         with open(filename, 'w') as f:
             f.write(new_content)
         print(f"Applied patch to {filename}")
