@@ -12,7 +12,7 @@ const path = require('path');
       await page.goto(url);
       await page.waitForSelector('#LD.gone', { state: 'attached', timeout: 20000 });
       if(action) await page.evaluate(action);
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
       await page.screenshot({ path: 'gameplay/' + name + '.png' });
       console.log('Captured ' + name);
     } catch(e) {
