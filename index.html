@@ -87,7 +87,7 @@
 
 <!-- HUD -->
 <div id='hud' class='fixed top-0 left-0 right-0 p-6 z-[100] pointer-events-none flex items-start justify-between'>
-    <div class='flex items-center gap-4 bg-white/10 backdrop-blur-2xl p-2 pr-8 rounded-[2.5rem] border-2 border-white/20 pointer-events-auto cursor-pointer shadow-2xl hover:scale-105 transition-all group' onclick='show("oChar"); loadChars();'>
+    <div class='flex items-center gap-4 bg-white/10 backdrop-blur-2xl p-2 pr-8 rounded-[2.5rem] border-2 border-white/20 pointer-events-auto cursor-pointer shadow-2xl hover:scale-105 transition-all group' onclick='show("oChar"); window.loadChars();'>
         <div class='size-16 rounded-[2rem] bg-gradient-to-br from-yellow-300 to-yellow-500 border-4 border-white/30 g-emoji shadow-lg flex items-center justify-center overflow-hidden' id='hAvatar'></div>
         <div class='flex flex-col'>
             <span class='text-white font-black text-xl italic tracking-tighter drop-shadow-md' id='hName'>RUNNER</span>
@@ -309,14 +309,7 @@
 
     function flash(id, ms) { const e=$(id); if(e) { e.classList.add('on'); setTimeout(() => e.classList.remove('on'), ms); } }
 
-    const CHARS = [
-        {"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5},
-        {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8},
-        {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4},
-        {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3},
-        {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6},
-        {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}
-    ];
+    const CHARS = [{"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5}, {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8}, {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4}, {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3}, {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6}, {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}];
     const GAMES = [
         { id: 'stars', name: '⭐ STAR COLLECTOR', tip: 'COLLECT STARS! GOLD = 30 PTS!', dur: 50, type: 'collect' },
         { id: 'sumo', name: '💪 SUMO RING', tip: 'PUSH ENEMIES OUT OF THE RING!', dur: 55, type: 'sumo' },
@@ -414,8 +407,8 @@
         a.addEventListener('mousedown', ev => { const r = a.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; upd(ev.clientX, ev.clientY); const mv = e => upd(e.clientX, e.clientY), up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); k.style.transform = 'translate(-50%,-50%)'; joy[key] = { x: 0, y: 0 }; }; document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up); });
     }
 
-    function openSocial() { show("oSocial"); loadSocial(); }
-    function doInteract() { if (!near) return; const t = near.userData.type; if (t === 'portal') { show('oPortal'); loadModes(); } else if (t === 'char') { show('oChar'); loadChars(); } else if (t === 'arcade') { show('oArcade'); loadArcade(); } else if (t === 'social') { show('oSocial'); loadSocial(); } hide('PROMPT'); }
+    window.openSocial = function() { show("oSocial"); window.loadSocial(); }
+    function doInteract() { if (!near) return; const t = near.userData.type; if (t === 'portal') { show('oPortal'); loadModes(); } else if (t === 'char') { show('oChar'); window.loadChars(); } else if (t === 'arcade') { show('oArcade'); loadArcade(); } else if (t === 'social') { show('oSocial'); window.loadSocial(); } hide('PROMPT'); }
 
 
     window.loadSocial = (tab = 'friends') => {
@@ -486,12 +479,12 @@
             c.onclick = () => { hide('oPortal'); rGames = shuffle(GAMES).slice(0, m.name.includes('PARTY') ? 3 : 1); rIdx = 0; startMinigame(rGames[0]); }; ml.appendChild(c);
         });
     }
-    function loadChars() {
+    window.loadChars = function() {
         const el = $('charList'); if (!el) return; el.innerHTML = '';
         CHARS.forEach(c => {
             const isSel = c.id === selChar; const item = document.createElement('div'); item.className = 'flex flex-col items-center gap-2';
             item.innerHTML = `<button class="w-full aspect-square bg-white/5 rounded-2xl border-2 ${isSel ? 'border-primary' : 'border-transparent'} transition-all flex items-center justify-center"><img src="${getGvEmoji(c.emoji)}" class="size-8 transform scale-125"></button><span class="text-[9px] font-black ${isSel ? 'text-primary' : 'text-gray-500'} uppercase">${esc(c.name)}</span>`;
-            item.onclick = () => { selChar = c.id; loadChars(); }; el.appendChild(item);
+            item.onclick = () => { selChar = c.id; window.loadChars(); }; el.appendChild(item);
         });
         updateCharDetail(getC(selChar));
     }
@@ -518,7 +511,7 @@
     }
     function cooldown(bId, cId, dur, prop) { const b=$(bId); if(b) b.classList.add('cd'); let r=dur; const iv=setInterval(() => { r-=.1; const c=$(cId); if(c) c.textContent=Math.max(0,Math.ceil(r)); if(r<=0) { clearInterval(iv); P[prop]=0; if(b) b.classList.remove('cd'); } }, 100); }
 
-    function startMinigame(game) {
+    window.startMinigame = function(game) {
         state = ST.CDOWN; curGame = game; $('hud').style.display = 'none'; show('CDOWN'); setText('cdName', game.name); setText('cdTip', game.tip);
         let cnt = 3; setText('cdNum', '3'); const iv = setInterval(() => { cnt--; if (cnt > 0) setText('cdNum', cnt); else if (cnt === 0) setText('cdNum', 'GO!'); else { clearInterval(iv); hide('CDOWN'); beginGame(); } }, 900);
     }
