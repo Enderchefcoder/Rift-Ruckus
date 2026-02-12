@@ -19,7 +19,7 @@ const path = require('path');
     await page.evaluate((m) => {
       setPreset(m);
     }, mode);
-    await page.waitForTimeout(3000); // Wait for reload and Three.js init
+    await page.waitForLoadState('networkidle');
   }
 
   // Classic
