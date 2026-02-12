@@ -30,7 +30,7 @@ async def verify():
         # Social
         async def open_social(page):
             await page.click('#social-btn')
-            await asyncio.sleep(1)
+            await page.wait_for_selector('#oSocial.show')
         await run_scenario(context, "mobile_social", open_social)
 
         # Explore
