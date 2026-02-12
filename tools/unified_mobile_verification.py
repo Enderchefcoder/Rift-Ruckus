@@ -44,7 +44,7 @@ async def verify():
         # Avatars
         async def open_avatars(page):
             await page.click('#hud > div:first-child')
-            await asyncio.sleep(1)
+            await page.wait_for_selector('#oChar.show')
         await run_scenario(context, "mobile_avatars", open_avatars)
 
         await browser.close()
