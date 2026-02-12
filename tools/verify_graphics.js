@@ -12,7 +12,7 @@ const path = require('path');
 
   const url = 'file://' + path.resolve('index.html');
   await page.goto(url);
-  await page.waitForTimeout(2000); // Wait for load
+  await page.waitForLoadState('load');
 
   // Helper to change preset and reload
   async function setMode(mode) {
