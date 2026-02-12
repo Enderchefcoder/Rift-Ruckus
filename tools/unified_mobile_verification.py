@@ -36,9 +36,9 @@ async def verify():
         # Explore
         async def open_explore(page):
             await page.click('#social-btn')
-            await asyncio.sleep(1)
+            await page.wait_for_selector('#oSocial.show')
             await page.click('#socialTabs button:nth-child(2)')
-            await asyncio.sleep(1)
+            await page.wait_for_selector('#exItems')
         await run_scenario(context, "mobile_explore", open_explore)
 
         # Avatars
