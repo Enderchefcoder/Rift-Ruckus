@@ -57,14 +57,15 @@
     #fps { position: fixed; top: 10px; right: 10px; color: #f2f20d; font-weight: 800; font-size: 12px; z-index: 1000; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 8px; }
 
     @media (max-width: 640px) {
-        #hud { transform: scale(0.65); transform-origin: top center; width: 154%; left: -27%; }
+        #hud { transform: scale(0.75); transform-origin: top left; z-index: 100 !important; }
+        #hud > div:first-child { max-width: 180px; }
         #hud .size-16 { width: 3rem; height: 3rem; border-radius: 1rem; }
         #hud .w-24 { width: 4rem; }
         #hName { font-size: 1rem; }
         #hud .size-14 { width: 3rem; height: 3rem; }
 
-        .joy-area { transform: scale(0.7); transform-origin: bottom left; bottom: 20px; left: 10px; }
-        #BTNS { transform: scale(0.7); transform-origin: bottom right; bottom: 20px; right: 10px; flex-direction: column !important; align-items: flex-end !important; gap: 10px !important; }
+        .joy-area { transform: scale(0.8); transform-origin: bottom left; bottom: 30px; left: 15px; }
+        #BTNS { transform: scale(0.8); transform-origin: bottom right; bottom: 30px; right: 15px; flex-direction: column !important; align-items: flex-end !important; gap: 12px !important; }
         #BTNS > div { flex-direction: column !important; gap: 10px !important; }
         #bJump { width: 100px !important; height: 100px !important; border-radius: 2rem !important; }
 
@@ -189,6 +190,23 @@
             <div class="size-12"></div>
         </header>
         <main class="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide" id="modeList"></main>
+    </div>
+</div>
+
+<div class="overlay" id="oArcade">
+    <div class="relative flex h-full max-h-[85vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
+        <header class="flex items-center justify-between p-6 pt-8 pb-4 shrink-0">
+            <button class="text-white hover:text-primary transition-colors flex items-center justify-center size-12 rounded-full bg-white/5" onclick="hide('oArcade')">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+            <h1 class="text-2xl font-black italic tracking-tighter">PRACTICE ARENA</h1>
+            <div class="size-12"></div>
+        </header>
+        <main class="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide">
+            <div class="text-center py-12 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                Practice mode coming soon!
+            </div>
+        </main>
     </div>
 </div>
 
@@ -478,6 +496,11 @@
             c.innerHTML = `<div class="size-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10"><span class="material-symbols-outlined text-primary text-3xl">${esc(m.icon)}</span></div><div class="flex-1"><h4 class="font-black italic text-lg tracking-tighter group-hover:text-primary transition-colors">${esc(m.name)}</h4><p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${esc(m.desc)}</p></div>`;
             c.onclick = () => { hide('oPortal'); rGames = shuffle(GAMES).slice(0, m.name.includes('PARTY') ? 3 : 1); rIdx = 0; startMinigame(rGames[0]); }; ml.appendChild(c);
         });
+    }
+    function loadArcade() {
+        const el = $('oArcade');
+        if (!el) return;
+        notify('Practice Mode Coming Soon!', 'inf');
     }
     window.loadChars = function() {
         const el = $('charList'); if (!el) return; el.innerHTML = '';

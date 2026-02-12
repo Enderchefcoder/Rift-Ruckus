@@ -1,4 +1,3 @@
-import asyncio
 from playwright.async_api import async_playwright
 import os
 
@@ -7,9 +6,7 @@ async def run_scenario(context, name, action=None):
     file_path = "file://" + os.path.abspath("index.html")
     await page.goto(file_path)
 
-    # Force hide loading screen
-    await page.evaluate("document.getElementById('LD').style.display = 'none'")
-    await asyncio.sleep(2)
+    await page.wait_for_selector('#LD.gone', state='attached', timeout=20000)
 
     if action:
         await action(page)
@@ -52,4 +49,5 @@ async def verify():
 if __name__ == "__main__":
     if not os.path.exists("screenshots"):
         os.makedirs("screenshots")
+    import asyncio
     asyncio.run(verify())

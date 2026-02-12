@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const fs = require('fs');
 const path = require('path');
 
 (async () => {
@@ -9,6 +10,7 @@ const path = require('path');
 
   const capture = async (name, action) => {
     try {
+      fs.mkdirSync('gameplay', { recursive: true });
       await page.goto(url);
       await page.waitForSelector('#LD.gone', { state: 'attached', timeout: 20000 });
       if(action) await page.evaluate(action);
@@ -21,9 +23,9 @@ const path = require('path');
   };
 
   await capture('new_lobby_hud');
-  await capture('new_char_select', () => { show('oChar'); loadChars(); });
-  await capture('new_settings', () => show('oSettings'));
-  await capture('new_modes', () => loadModes() || show('oPortal'));
+  await capture('new_char_select', () => { window.show('oChar'); window.loadChars(); });
+  await capture('new_settings', () => window.show('oSettings'));
+  await capture('new_modes', () => window.loadModes() || window.show('oPortal'));
   await capture('new_results', () => {
     P.score = 1250;
     showResults();
