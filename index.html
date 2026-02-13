@@ -163,6 +163,23 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 @keyframes st{0%{background:radial-gradient(ellipse at center,rgba(255,0,0,.35),transparent)}100%{background:transparent}}
 .speed{position:fixed;inset:0;pointer-events:none;z-index:88;background:radial-gradient(ellipse at center,transparent 20%,rgba(255,255,255,.15) 100%);display:none}
 .speed.on{display:block}
+
+.body-deluxe #hud .panel{background:rgba(8,15,30,.88);border-color:rgba(255,255,255,.24);box-shadow:0 0 30px rgba(255,236,120,.2)}
+.body-deluxe .vignette{background:radial-gradient(ellipse at center,transparent 20%,rgba(2,8,20,.65) 100%)}
+.body-hd .panel{box-shadow:0 10px 25px rgba(0,0,0,.35)}
+.quick-menu{position:fixed;top:130px;left:10px;display:flex;flex-direction:column;gap:8px;z-index:220}
+.quick-menu .side-btn{background:linear-gradient(145deg,#2d3436,#000)}
+.settings-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:12px}
+.settings-tab{border:none;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;padding:8px;font-size:11px;font-weight:700}
+.settings-tab.on{background:#f1ff00;color:#111}
+.settings-panel{display:none;padding:0 12px 14px;color:#fff;font-size:13px}
+.settings-panel.show{display:block}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.social-head{padding:10px 12px;color:#fff;font-weight:700}
+.friend-list{display:flex;flex-direction:column;gap:8px;padding:0 12px 12px;max-height:50vh;overflow:auto}
+.friend-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.08);color:#fff}
+.friend-row button{background:#f1ff00;border:none;border-radius:14px;padding:6px 12px;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -181,12 +198,14 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 <div class="btns" id="BTNS">
 <button class="btn btn-jump" id="bJump">🦘<div class="btn-cd" id="cdJump"></div><span class="btn-label">Jump</span></button>
 <button class="btn btn-grab" id="bGrab">🤜<div class="btn-cd" id="cdGrab"></div><span class="btn-label">Grab</span></button>
+<button class="btn btn-grab" id="bPush">💥<div class="btn-cd" id="cdPush"></div><span class="btn-label">Push</span></button>
 <button class="btn btn-skill" id="bSkill">⚡<div class="btn-cd" id="cdSkill"></div><span class="btn-label" id="lblSkill">Skill</span></button>
 </div>
 <div class="side-btns" id="SIDE">
 <button class="side-btn emote-btn" id="bEmote">😄</button>
 <button class="side-btn sprint-btn" id="bSprint">🏃</button>
 </div>
+<div class="quick-menu"><button class="side-btn" id="bSettings">⚙️</button><button class="side-btn" id="bSocial">🤝</button></div>
 <div class="emote-pop" id="emPop"></div>
 <div class="panel prompt" id="PROMPT"><span class="prompt-icon" id="prIcon">🌀</span><span class="prompt-text" id="prText">Enter</span><button class="prompt-go" id="prGo">Go</button></div>
 <div class="indicator" id="IND"></div>
@@ -198,6 +217,10 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 <div class="overlay" id="oPortal"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oPortal')">×</button><div class="box-head"><h2>🎄 Portal</h2><p>Choose mode</p></div><div class="box-body" id="modeList"></div></div></div>
 <div class="overlay" id="oChar"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oChar')">×</button><div class="box-head"><h2>🎭 Runner</h2><p>Choose character</p></div><div class="box-body"><div class="cg" id="charGrid"></div><div class="cp" id="charPrev"></div></div></div></div>
 <div class="overlay" id="oArcade"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oArcade')">×</button><div class="box-head"><h2>🕹️ Practice</h2><p>Choose game</p></div><div class="box-body"><div class="ag" id="arcGrid"></div></div></div></div>
+
+
+<div class="overlay" id="oSettings"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oSettings')">×</button><div class="box-head"><h2>⚙️ Settings</h2><p>Controls, AI, Debug, Accessibility, Graphics</p></div><div class="settings-tabs" id="settingsTabs"></div><div id="settingsBody"></div></div></div>
+<div class="overlay" id="oSocial"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oSocial')">×</button><div class="box-head"><h2>🤝 Social Hub</h2><p>Bots you played with and friended</p></div><div class="social-head" id="socialStats"></div><div class="friend-list" id="friendList"></div></div></div>
 
 <div class="ghud" id="GHUD"><div class="g-title" id="gTitle">Game</div><div class="g-time" id="gTime">60</div></div>
 <div class="g-tip" id="gTip"></div>
@@ -224,11 +247,13 @@ function flash(id,ms){const e=$(id);if(e){e.classList.add('on');setTimeout(()=>e
 
 // ========== DATA ==========
 const CHARS=[
-{id:'glitch',name:'Glitch',emoji:'😎',role:'Speed',color:0x5C6BC0,spd:90,pow:50,jmp:80,skill:'Blink',sType:'tele',sCD:5},
-{id:'tank',name:'Harold',emoji:'🦣',role:'Tank',color:0x795548,spd:45,pow:95,jmp:40,skill:'Quake',sType:'stun',sCD:8},
-{id:'sally',name:'Sally',emoji:'🐍',role:'Speed',color:0x26A69A,spd:95,pow:45,jmp:75,skill:'Dash',sType:'dash',sCD:4},
-{id:'blob',name:'Blobby',emoji:'🟣',role:'Jump',color:0xEC407A,spd:65,pow:55,jmp:99,skill:'Bounce',sType:'jump',sCD:3},
-{id:'santa',name:'Santa',emoji:'🎅',role:'All',color:0xE74C3C,spd:70,pow:70,jmp:70,skill:'Gift',sType:'buff',sCD:10}
+{id:'glitch',name:'Glitch',emoji:'😎',role:'Speed',color:0x5C6BC0,spd:82,pow:52,jmp:78,skill:'Teleport Glitch',sType:'tele',sCD:5},
+{id:'harold',name:'Harold',emoji:'🦣',role:'Tank',color:0x6D4C41,spd:58,pow:98,jmp:42,skill:'Fortify',sType:'fortify',sCD:9},
+{id:'sally',name:'Sally',emoji:'🐍',role:'Speed',color:0x26A69A,spd:84,pow:47,jmp:76,skill:'Slither Dodge',sType:'dash',sCD:4},
+{id:'blobby',name:'Blobby',emoji:'🟣',role:'Jump',color:0xAB47BC,spd:66,pow:57,jmp:99,skill:'Mega Bounce',sType:'jump',sCD:3},
+{id:'pipit',name:'Pipit',emoji:'🦔',role:'Knockback',color:0xFF8F00,spd:68,pow:82,jmp:62,skill:'AOE Burst',sType:'aoe',sCD:7},
+{id:'toby',name:'Toby',emoji:'🦇',role:'Stealth',color:0x546E7A,spd:72,pow:55,jmp:70,skill:'Invisibility',sType:'stealth',sCD:10},
+{id:'magna',name:'Magna',emoji:'🪼',role:'Chaos',color:0x29B6F6,spd:70,pow:70,jmp:70,skill:'Chaos Cast',sType:'chaos',sCD:8}
 ];
 
 const GAMES=[
@@ -250,7 +275,7 @@ const EMOTES=['😄','🎄','🎅','⛄','🎁','❄️','🔥','💪'];
 const ST={LOAD:0,LOBBY:1,CDOWN:2,GAME:3,RES:4};
 let state=ST.LOAD;
 let P={gems:500,crowns:10,charId:'glitch',score:0,isIt:false,tagImmune:0,
-skillCD:0,grabCD:0,stunned:0,stamina:100,sprinting:false,hillTime:0,lv:1,xp:0,buffTime:0};
+skillCD:0,grabCD:0,pushCD:0,stunned:0,stamina:100,sprinting:false,hillTime:0,lv:1,xp:0,buffTime:0,defenseBoost:0,stealthTime:0};
 let selChar='glitch';
 let scene,cam,ren,clk,sun;
 var player,bots=[],lobbyMeshes=[],gameMeshes=[],stars=[],pads=[];
@@ -263,11 +288,48 @@ let curGame=null,gTimer=0,gActive=false,rGames=[],rIdx=0;
 let musicOn=true,padCount=16,scoreT=0;
 let particles3d=[];
 let shakeAmt=0;
+let gameToken=0;
+const SAVE_KEY='rift-ruckus-save-v2';
+const BOT_KEY='rift-ruckus-bots-v1';
+let graphicsPreset='classic';
+let settings={controls:{leftHand:false},ai:{adaptive:true,difficulty:1},debug:{minimap:true},accessibility:{highContrast:false},graphics:{preset:'classic'}};
+let botProfiles={};
 
 const G=.03,SPD=.13,JMP=.4,FRC=.86;
 
 function getC(id){return CHARS.find(c=>c.id===id)||CHARS[0];}
 function curC(){return getC(P.charId);}
+
+function saveState(){
+const payload={P:{gems:P.gems,crowns:P.crowns,charId:P.charId,lv:P.lv,xp:P.xp},settings,botProfiles};
+localStorage.setItem(SAVE_KEY,JSON.stringify(payload));
+localStorage.setItem(BOT_KEY,JSON.stringify(botProfiles));
+}
+function loadState(){
+try{
+const raw=localStorage.getItem(SAVE_KEY);
+if(raw){
+const data=JSON.parse(raw);
+if(data.P)Object.assign(P,data.P);
+if(data.settings)settings=data.settings;
+if(data.botProfiles)botProfiles=data.botProfiles;
+}
+const braw=localStorage.getItem(BOT_KEY);
+if(braw)botProfiles=JSON.parse(braw)||botProfiles;
+}catch(e){console.warn('save load failed',e);}
+graphicsPreset=settings.graphics?.preset||'classic';
+}
+function applyGraphicsPreset(preset){
+graphicsPreset=preset;
+settings.graphics.preset=preset;
+document.body.classList.remove('body-classic','body-hd','body-deluxe');
+document.body.classList.add('body-'+preset);
+if(!ren)return;
+if(preset==='classic'){ren.shadowMap.enabled=true;ren.toneMappingExposure=1.1;scene.fog.density=.005;}
+if(preset==='hd'){ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;ren.toneMappingExposure=1.35;scene.fog.density=.004;}
+if(preset==='deluxe'){ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.VSMShadowMap;ren.toneMappingExposure=1.55;scene.fog.density=.003;scene.background=new THREE.Color(0x233b56);}
+saveState();
+}
 
 // ========== THREE SETUP ==========
 function initThree(){
@@ -504,13 +566,15 @@ scene.add(player);
 function spawnBots(n){
 bots.forEach(b=>scene.remove(b.mesh));bots=[];
 const pool=CHARS.filter(c=>c.id!==P.charId);
+const friendNames=Object.values(botProfiles).filter(b=>b.friend).map(b=>b.name);
 for(let i=0;i<n;i++){
 const ch=pool[i%pool.length];
 const mesh=makeChar(ch,true);
 const a=((i+1)/(n+1))*Math.PI*2,r=24+rnd(0,10);
 mesh.position.set(Math.cos(a)*r,0,Math.sin(a)*r);
+const botName=friendNames[i]||ch.name;
 bots.push({
-mesh,ch,name:ch.name,emoji:ch.emoji,color:ch.color,
+mesh,ch,name:botName,emoji:ch.emoji,color:ch.color,friend:friendNames.includes(botName),memory:botProfiles[botName]?.trust||0.4,
 score:0,isIt:false,tagImmune:0,stunned:0,
 vel:{x:0,y:0,z:0},grounded:true,eliminated:false,
 hillTime:0,target:null,aiTimer:0
@@ -582,7 +646,10 @@ const tap=(id,fn)=>{const e=$(id);if(!e)return;e.addEventListener('touchstart',e
 tap('prGo',doInteract);
 tap('bJump',doJump);
 tap('bGrab',doGrab);
+tap('bPush',doPush);
 tap('bSkill',doSkill);
+tap('bSettings',()=>{show('oSettings');renderSettings();});
+tap('bSocial',()=>{show('oSocial');renderSocial();});
 tap('bEmote',()=>$('emPop')?.classList.toggle('show'));
 // Sprint hold
 const sp=$('bSprint');
@@ -643,6 +710,20 @@ updInd();
 
 
 
+function doPush(){
+if(P.pushCD>0||P.stunned>0||state!==ST.GAME)return;
+P.pushCD=1.1;cooldown('bPush','cdPush',1.1,'pushCD');
+const fwd=new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0),player.rotation.y);
+const hit=player.position.clone().add(fwd.multiplyScalar(2.4));
+bots.forEach(b=>{
+if(b.eliminated||d3(hit,b.mesh.position)>4.2)return;
+const dx=b.mesh.position.x-player.position.x,dz=b.mesh.position.z-player.position.z,dd=Math.hypot(dx,dz);
+if(dd>.05){b.vel.x+=(dx/dd)*1.1;b.vel.z+=(dz/dd)*1.1;b.vel.y=.18;}
+b.stunned=.6;
+mkParts(b.mesh.position.x,1.5,b.mesh.position.z,0xffffff,18);
+});
+}
+
 function doSkill(){
 if(P.skillCD>0||P.stunned>0)return;
 if(state!==ST.GAME&&state!==ST.LOBBY)return;
@@ -680,11 +761,30 @@ case'stun':
   };
   rAni();
   break;
-case'buff':
-  P.buffTime=5;
-  notify('POWER UP!','ok');
-  flash('SPEED',5000);
-  mkParts(player.position.x,2,player.position.z,0xFF0000,30);
+case'fortify':
+  P.defenseBoost=5;
+  notify('Fortified!','ok');
+  mkParts(player.position.x,2,player.position.z,0x8BC34A,26);
+  break;
+case'aoe':
+  bots.forEach(b=>{if(d3(player.position,b.mesh.position)<9){const dx=b.mesh.position.x-player.position.x,dz=b.mesh.position.z-player.position.z,dd=Math.max(.1,Math.hypot(dx,dz));b.vel.x+=(dx/dd)*1.4;b.vel.z+=(dz/dd)*1.4;b.vel.y=.25;b.stunned=.7;}});
+  mkParts(player.position.x,1.8,player.position.z,0xFF9800,36);
+  break;
+case'stealth':
+  P.stealthTime=3;
+  player.traverse(part=>{if(part.material){part.material.transparent=true;part.material.opacity=.25;}});
+  setTimeout(()=>player.traverse(part=>{if(part.material){part.material.opacity=1;part.material.transparent=false;}}),3000);
+  break;
+case'chaos':
+  const options=['tele','dash','jump','fortify','aoe','stealth'];
+  const randomSkill=options[Math.floor(Math.random()*options.length)];
+  if(randomSkill==='tele'){mkParts(player.position.x,1.5,player.position.z,0x00FFFF,20);player.position.add(fwd.clone().multiplyScalar(10));mkParts(player.position.x,1.5,player.position.z,0x00FFFF,30);} 
+  if(randomSkill==='dash'){pVel.x+=fwd.x*1.2;pVel.z+=fwd.z*1.2;mkParts(player.position.x,1,player.position.z,0x4ECDC4,25);} 
+  if(randomSkill==='jump'){pVel.y=.7;grounded=false;mkParts(player.position.x,.3,player.position.z,0xFF69B4,25);} 
+  if(randomSkill==='fortify'){P.defenseBoost=5;mkParts(player.position.x,2,player.position.z,0x8BC34A,26);} 
+  if(randomSkill==='aoe'){bots.forEach(b=>{if(d3(player.position,b.mesh.position)<9){const dx=b.mesh.position.x-player.position.x,dz=b.mesh.position.z-player.position.z,dd=Math.max(.1,Math.hypot(dx,dz));b.vel.x+=(dx/dd)*1.4;b.vel.z+=(dz/dd)*1.4;b.vel.y=.25;b.stunned=.7;}});mkParts(player.position.x,1.8,player.position.z,0xFF9800,36);} 
+  if(randomSkill==='stealth'){P.stealthTime=3;player.traverse(part=>{if(part.material){part.material.transparent=true;part.material.opacity=.25;}});setTimeout(()=>player.traverse(part=>{if(part.material){part.material.opacity=1;part.material.transparent=false;}}),3000);} 
+  notify('Chaos: '+randomSkill,'inf');
   break;
 }
 notify(c.skill+'!','inf');
@@ -739,7 +839,7 @@ function previewChar(c){
 const el=$('charPrev');if(!el)return;
 el.innerHTML=`<div class="cp-top"><div class="cp-av" style="background:#${c.color.toString(16).padStart(6,'0')}">${c.emoji}</div><div><div class="cp-name">${c.name}</div><div class="cp-role">${c.role}</div></div></div>
 <div class="stats"><div class="stat">⚡<div class="stat-track"><div class="stat-fill" style="width:${c.spd}%;background:#4ecdc4"></div></div></div><div class="stat">💪<div class="stat-track"><div class="stat-fill" style="width:${c.pow}%;background:#ff6b6b"></div></div></div><div class="stat">🦘<div class="stat-track"><div class="stat-fill" style="width:${c.jmp}%;background:#f1c40f"></div></div></div></div>
-<div class="ab"><h5>⚡ ${c.skill} (${c.sCD}s)</h5><p>Special ability</p></div>
+<div class="ab"><h5>⚡ ${c.skill} (${c.sCD}s)</h5><p>Role: ${c.role} specialist</p></div>
 <button class="sel-btn" id="selBtn">Play as ${c.name}</button>`;
 $('selBtn').onclick=()=>{P.charId=c.id;updatePlayerMesh();hide('oChar');notify('Playing as '+c.name+'!','ok');};
 }
@@ -752,6 +852,7 @@ player.position.copy(pos);player.rotation.y=rot;
 scene.add(player);
 setText('hAvatar',curC().emoji);
 setText('lblSkill',curC().skill);
+saveState();
 }
 
 function loadArcade(){
@@ -762,6 +863,55 @@ const card=document.createElement('div');card.className='ac';
 card.innerHTML=`<div class="ac-icon">${g.name.split(' ')[0]}</div><div class="ac-name">${g.name.substring(g.name.indexOf(' ')+1)}</div>`;
 card.onclick=()=>{hide('oArcade');curGame=g;setTimeout(()=>startMinigame(g),300);};
 grid.appendChild(card);
+});
+}
+
+function renderSettings(){
+const tabs=['Controls','AI','Debug','Accessibility','Graphics'];
+const tabWrap=$('settingsTabs');const body=$('settingsBody');
+if(!tabWrap||!body)return;
+let active=tabs[0];
+const draw=()=>{
+tabWrap.innerHTML='';
+tabs.forEach(t=>{const b=document.createElement('button');b.className='settings-tab'+(active===t?' on':'');b.textContent=t;b.onclick=()=>{active=t;draw();};tabWrap.appendChild(b);});
+let html='';
+if(active==='Controls')html=`<div class="settings-panel show"><div class="setting-row"><span>Left Handed Layout</span><input type="checkbox" ${settings.controls.leftHand?'checked':''} id="stLeft"></div><div class="setting-row"><span>Push Button</span><span>Enabled</span></div></div>`;
+if(active==='AI')html=`<div class="settings-panel show"><div class="setting-row"><span>Adaptive AI Learning</span><input type="checkbox" ${settings.ai.adaptive?'checked':''} id="stAiAd"></div><div class="setting-row"><span>Difficulty</span><input type="range" min="0.6" max="1.6" step="0.1" value="${settings.ai.difficulty}" id="stAiDiff"></div></div>`;
+if(active==='Debug')html=`<div class="settings-panel show"><div class="setting-row"><span>Minimap</span><input type="checkbox" ${settings.debug.minimap?'checked':''} id="stMap"></div><div class="setting-row"><span>Debug API</span><span>window.DEBUG</span></div></div>`;
+if(active==='Accessibility')html=`<div class="settings-panel show"><div class="setting-row"><span>High Contrast HUD</span><input type="checkbox" ${settings.accessibility.highContrast?'checked':''} id="stContrast"></div><div class="setting-row"><span>Larger Text</span><span>Auto mobile</span></div></div>`;
+if(active==='Graphics')html=`<div class="settings-panel show"><div class="setting-row"><span>Classic</span><button id="gpClassic">Apply</button></div><div class="setting-row"><span>HD</span><button id="gpHd">Apply</button></div><div class="setting-row"><span>Deluxe HD</span><button id="gpDeluxe">Apply</button></div></div>`;
+body.innerHTML=html;
+$('stLeft')?.addEventListener('change',e=>{settings.controls.leftHand=e.target.checked;const left=settings.controls.leftHand;$('joyL').style.left=left?'': '18px';$('joyL').style.right=left?'18px':'';$('joyR').style.right=left?'':'18px';$('joyR').style.left=left?'18px':'';saveState();});
+$('stAiAd')?.addEventListener('change',e=>{settings.ai.adaptive=e.target.checked;saveState();});
+$('stAiDiff')?.addEventListener('input',e=>{settings.ai.difficulty=parseFloat(e.target.value);saveState();});
+$('stMap')?.addEventListener('change',e=>{settings.debug.minimap=e.target.checked;saveState();});
+$('stContrast')?.addEventListener('change',e=>{settings.accessibility.highContrast=e.target.checked;document.body.style.filter=settings.accessibility.highContrast?'contrast(1.2) saturate(1.1)':'none';saveState();});
+$('gpClassic')?.addEventListener('click',()=>applyGraphicsPreset('classic'));
+$('gpHd')?.addEventListener('click',()=>applyGraphicsPreset('hd'));
+$('gpDeluxe')?.addEventListener('click',()=>applyGraphicsPreset('deluxe'));
+};
+draw();
+}
+
+function rememberBot(bot){
+if(!botProfiles[bot.name])botProfiles[bot.name]={name:bot.name,emoji:bot.emoji,friend:false,games:0,wins:0,trust:0.5};
+const bp=botProfiles[bot.name];
+bp.games+=1;
+bp.trust=clamp(bp.trust+0.05,0,1);
+saveState();
+}
+
+function renderSocial(){
+const list=$('friendList');const stats=$('socialStats');if(!list||!stats)return;
+const all=Object.values(botProfiles);
+stats.textContent=`Bots known: ${all.length} • Friends: ${all.filter(b=>b.friend).length}`;
+list.innerHTML='';
+if(all.length===0){list.innerHTML='<div class="friend-row">Play matches to build bot memories.</div>';return;}
+all.sort((a,b)=>b.games-a.games).forEach(b=>{
+const row=document.createElement('div');row.className='friend-row';
+row.innerHTML=`<span>${b.emoji} ${b.name} • games ${b.games}</span><button>${b.friend?'INVITE':'ADD'}</button>`;
+row.querySelector('button').onclick=()=>{b.friend=!b.friend;saveState();renderSocial();if(b.friend)notify(`${b.name} added to friends`,'ok');};
+list.appendChild(row);
 });
 }
 
@@ -801,7 +951,7 @@ if(p>=100){clearInterval(iv);setTimeout(()=>{$('LD')?.classList.add('gone');stat
 
 // ========== MINIGAME START ==========
 function startMinigame(game){
-state=ST.CDOWN;curGame=game;scoreT=0;musicOn=true;padCount=16;hillMesh=null;
+state=ST.CDOWN;curGame=game;gameToken++;scoreT=0;musicOn=true;padCount=16;hillMesh=null;
 $('hud').style.display='none';
 $('MM')?.classList.remove('show');
 $('PROMPT')?.classList.remove('show');
@@ -912,7 +1062,7 @@ buildArenaScenery();
 const R=game.type==='sumo'?50:85;
 // Ground
 const gnd=sMesh(new THREE.CircleGeometry(R,60),mat({collect:0x2E7D32,sumo:0x5D4037,hill:0xBF360C,tag:0x006064,pads:0x4A148C}[game.type]||0x2E7D32,.8));
-gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;addMesh(gnd,false);
+gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;addMesh(gnd,false);solidPlatforms.push({mesh:gnd,radius:R,topY:0});
 // Border
 const bor=sMesh(new THREE.TorusGeometry(R,1.5,10,60),mat(0xFFD700,.4));
 bor.rotation.x=Math.PI/2;bor.position.y=.75;addMesh(bor,false);
@@ -1006,12 +1156,13 @@ setTimeout(()=>{musicOn=true;resetPads();updInd();},2000);
 
 
 function spawnStar(){
-const gold=Math.random()<.12;
-const val=gold?30:10;
+const gold=Math.random()<.18;
+const val=gold?30:12;
+const white=!gold&&Math.random()<.45;
 const shape=new THREE.Shape();
 for(let i=0;i<10;i++){const r=i%2===0?.8:.38,a=(i/10)*Math.PI*2-Math.PI/2;if(i===0)shape.moveTo(Math.cos(a)*r,Math.sin(a)*r);else shape.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
 shape.closePath();
-const mesh=sMesh(new THREE.ExtrudeGeometry(shape,{depth:.35,bevelEnabled:false}),mat(gold?0xFFD700:0xFFFF00,.3));
+const mesh=sMesh(new THREE.ExtrudeGeometry(shape,{depth:.35,bevelEnabled:false}),mat(gold?0xD4AF37:(white?0xF5F7FF:0xFFE066),.25));
 if(gold)mesh.scale.setScalar(1.5);
 const a=rnd(0,Math.PI*2),r=rnd(10,60);
 mesh.position.set(Math.cos(a)*r,2.5,Math.sin(a)*r);
@@ -1023,7 +1174,9 @@ scene.add(mesh);gameMeshes.push(mesh);stars.push(mesh);
 // ========== BOT AI ==========
 
 function runBotAI(dt){
-const spd_base=SPD*.7*(curGame?.type==='pads'?.6:1)*(curGame?.type==='sumo'?.7:1);
+const playerSkill=Math.min(1.6,0.8+(P.score/Math.max(1,curGame?.dur||60))/40);
+const adapt=(settings.ai.adaptive?clamp(playerSkill,0.8,1.5):1)*settings.ai.difficulty;
+const spd_base=SPD*(curGame?.type==='pads'?.65:1)*(curGame?.type==='sumo'?.78:1)*adapt;
 bots.forEach((b,idx)=>{
 if(b.eliminated){b.mesh.visible=true;return;}
 if(b.stunned>0){b.stunned-=dt;return;}
@@ -1074,7 +1227,7 @@ if(state===ST.GAME && !b.isIt && Math.random() < 0.02) {
     const tPos = t.position || t.mesh.position;
     if(d3(b.mesh.position, tPos) < 4) {
       const dx=tPos.x-b.mesh.position.x, dz=tPos.z-b.mesh.position.z, dd=Math.sqrt(dx*dx+dz*dz);
-      if(t === player) { pVel.x+=(dx/dd)*0.4; pVel.z+=(dz/dd)*0.4; pVel.y=0.15; P.stunned=0.4; flash('STUMBLE', 300); }
+      if(t === player) { const scale=P.defenseBoost>0?0.45:1; pVel.x+=(dx/dd)*0.4*scale; pVel.z+=(dz/dd)*0.4*scale; pVel.y=0.15*scale; P.stunned=0.4*scale; flash('STUMBLE', 300); }
       else { t.vel.x+=(dx/dd)*0.4; t.vel.z+=(dz/dd)*0.4; t.vel.y=0.15; t.stunned=0.4; }
       mkParts(tPos.x, 1.5, tPos.z, 0xFFFFFF, 10);
     }
@@ -1090,7 +1243,7 @@ else{b.mesh.position.x*=sumoR/bd;b.mesh.position.z*=sumoR/bd;}
 stars.forEach(s=>{
 if(!s.userData.taken&&d3(b.mesh.position,s.position)<3){
 s.userData.taken=true;scene.remove(s);b.score+=s.userData.val;
-setTimeout(()=>spawnStar(),4000);
+const token=gameToken;setTimeout(()=>{if(state===ST.GAME&&curGame?.type==='collect'&&token===gameToken)spawnStar();},4000);
 }
 });
 if(curGame?.type==='tag'&&b.isIt&&b.tagImmune<=0){
@@ -1123,6 +1276,8 @@ if(P.tagImmune>0)P.tagImmune-=dt;
 if(!P.sprinting&&P.stamina<100)P.stamina=Math.min(100,P.stamina+22*dt);
 scoreT+=dt;
 if(P.buffTime>0)P.buffTime-=dt;
+if(P.defenseBoost>0)P.defenseBoost-=dt;
+if(P.stealthTime>0)P.stealthTime-=dt;
 const t=Date.now()*.001;
 gameMeshes.forEach(o=>{
 if(o.userData.bob)o.position.y=(o.userData.baseY||4)+Math.sin(t*2)*.5;
@@ -1137,11 +1292,12 @@ if(d3(player.position,s.position)<3){
 s.userData.taken=true;scene.remove(s);
 P.score+=s.userData.val;
 mkParts(s.position.x,s.position.y,s.position.z,0xFFD700,18);
-setTimeout(()=>spawnStar(),4000);
+const token=gameToken;setTimeout(()=>{if(state===ST.GAME&&curGame?.type==='collect'&&token===gameToken)spawnStar();},4000);
 }
 }
 });
 if(curGame?.type==='hill'&&hillMesh){
+if(Math.abs(pVel.x)<0.001&&Math.abs(joy.l.x)>0.2){pVel.x+=joy.l.x*0.02;pVel.z+=joy.l.y*0.02;}
 const hd=d2(player.position,{x:0,z:0});
 if(hd<hillMesh.radius&&player.position.y>=hillMesh.topY-.5){
 P.hillTime+=dt;
@@ -1213,6 +1369,7 @@ body.appendChild(d);
 
 function updateMM(){
 const mm=$('MM');if(!mm)return;
+if(!settings.debug.minimap){mm.classList.remove('show');return;}
 mm.classList.add('show');
 mm.querySelectorAll('.mm-dot').forEach(d=>d.remove());
 bots.forEach(b=>{
@@ -1229,6 +1386,8 @@ mm.appendChild(dot);
 }
 
 function endMinigame(){
+bots.forEach(rememberBot);
+
 gActive=false;state=ST.RES;
 hide('GHUD');hide('SB');hide('IND');
 $('BTNS').style.display='none';
@@ -1253,6 +1412,10 @@ pod.appendChild(d);
 }
 const shards=won?180:50+rank*15;
 P.gems+=shards;
+P.xp+=Math.max(10,Math.floor(P.score/10));
+P.lv=1+Math.floor(P.xp/200);
+setText('hLv',P.lv);
+saveState();
 setText('hGems',P.gems);
 const rr=$('resRew');if(rr)rr.innerHTML=`<div class="rew-c">💎 +${shards}</div>`;
 show('RES');
@@ -1336,7 +1499,7 @@ const c=curC();
 const inp=joy.l;
 const sprint=(P.sprinting&&P.stamina>0?1.4:1)*(P.buffTime>0?1.3:1);
 if(P.sprinting&&P.stamina>0)P.stamina=Math.max(0,P.stamina-dt*30);
-const spd=SPD*(c.spd/80)*sprint*.55*(curGame?.type==='pads'?!musicOn?0.15:0.7:1);
+const spd=SPD*(c.spd/80)*sprint*(curGame?.type==='pads'?!musicOn?0.2:0.72:1);
 const mag=Math.sqrt(inp.x**2+inp.y**2);
 if(mag>.1){
 const ang=Math.atan2(inp.x,inp.y)+camAng;
@@ -1372,7 +1535,9 @@ ren.render(scene,cam);
 }
 
 // ========== INIT ==========
+loadState();
 initThree();
+applyGraphicsPreset(graphicsPreset);
 buildLobby();
 spawnPlayer();
 spawnBots(5);
@@ -1393,7 +1558,7 @@ window.DEBUG = {
   setLv: (n) => { P.lv = n; setText('hLv', n); }
 };
 
-animate();
+setText('hGems',P.gems);setText('hCrowns',P.crowns);setText('hLv',P.lv);selChar=P.charId;updatePlayerMesh();animate();
 </script>
 </body>
   </html>
