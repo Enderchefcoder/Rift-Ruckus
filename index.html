@@ -179,6 +179,10 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 .friend-list{display:flex;flex-direction:column;gap:8px;padding:0 12px 12px;max-height:50vh;overflow:auto}
 .friend-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.08);color:#fff}
 .friend-row button{background:#f1ff00;border:none;border-radius:14px;padding:6px 12px;font-weight:800}
+.fp-badge{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.3);padding:6px 10px;border-radius:10px;color:#fff;font-size:11px;z-index:220;display:none}
+.fp-badge.show{display:block}
+.travel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
+.travel-card{border:none;border-radius:14px;padding:12px;background:rgba(255,255,255,.08);color:#fff;font-weight:700}
 
 </style>
 </head>
@@ -213,6 +217,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 <div class="particles" id="PARTS"></div>
 <div class="stumble" id="STUMBLE"></div>
 <div class="speed" id="SPEED"></div>
+<div class="fp-badge" id="FPB">First Person</div>
 
 <div class="overlay" id="oPortal"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oPortal')">×</button><div class="box-head"><h2>🎄 Portal</h2><p>Choose mode</p></div><div class="box-body" id="modeList"></div></div></div>
 <div class="overlay" id="oChar"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oChar')">×</button><div class="box-head"><h2>🎭 Runner</h2><p>Choose character</p></div><div class="box-body"><div class="cg" id="charGrid"></div><div class="cp" id="charPrev"></div></div></div></div>
@@ -221,6 +226,7 @@ canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0}
 
 <div class="overlay" id="oSettings"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oSettings')">×</button><div class="box-head"><h2>⚙️ Settings</h2><p>Controls, AI, Debug, Accessibility, Graphics</p></div><div class="settings-tabs" id="settingsTabs"></div><div id="settingsBody"></div></div></div>
 <div class="overlay" id="oSocial"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oSocial')">×</button><div class="box-head"><h2>🤝 Social Hub</h2><p>Bots you played with and friended</p></div><div class="social-head" id="socialStats"></div><div class="friend-list" id="friendList"></div></div></div>
+<div class="overlay" id="oTravel"><div class="box" style="position:relative"><button class="box-x" onclick="hide('oTravel')">×</button><div class="box-head"><h2>🧭 Fast Travel</h2><p>Jump to lobby landmarks</p></div><div class="travel-grid" id="travelGrid"></div></div></div>
 
 <div class="ghud" id="GHUD"><div class="g-title" id="gTitle">Game</div><div class="g-time" id="gTime">60</div></div>
 <div class="g-tip" id="gTip"></div>
@@ -292,8 +298,39 @@ let gameToken=0;
 const SAVE_KEY='rift-ruckus-save-v2';
 const BOT_KEY='rift-ruckus-bots-v1';
 let graphicsPreset='classic';
-let settings={controls:{leftHand:false},ai:{adaptive:true,difficulty:1},debug:{minimap:true},accessibility:{highContrast:false},graphics:{preset:'classic'}};
+let settings={controls:{leftHand:false,firstPerson:false},ai:{adaptive:true,difficulty:1,teamplay:0.55},debug:{minimap:true},accessibility:{highContrast:false},graphics:{preset:'classic'}};
 let botProfiles={};
+const TRAVEL_POINTS=[
+{id:'plaza',name:'Central Plaza',icon:'⛲',x:0,y:3.5,z:22},
+{id:'portal',name:'Portal Gate',icon:'🌀',x:0,y:1,z:-36},
+{id:'mirror',name:'Mirror Hall',icon:'🎭',x:36,y:1,z:0},
+{id:'arcade',name:'Arcade Deck',icon:'🕹️',x:-36,y:1,z:0},
+{id:'grove',name:'Forest Grove',icon:'🌲',x:64,y:1,z:28}
+];
+function terrainHeightAt(pos){
+if(state===ST.GAME && curGame?.type==='sumo')return 0;
+if(state===ST.GAME && curGame?.type==='pads')return 0;
+const base=(Math.sin(pos.x*0.045)+Math.cos(pos.z*0.04))*0.45 + Math.sin((pos.x+pos.z)*0.02)*0.25;
+if(state===ST.LOBBY)return Math.max(0,base*0.8);
+if(state===ST.GAME)return Math.max(0,base*0.55);
+return 0;
+}
+function clampVelocityXZ(vel,maxSpeed){
+const m=Math.hypot(vel.x,vel.z);
+if(m>maxSpeed&&m>0.001){const k=maxSpeed/m;vel.x*=k;vel.z*=k;}
+}
+function loadTravel(){
+const grid=$('travelGrid');if(!grid)return;
+grid.innerHTML='';
+TRAVEL_POINTS.forEach(tp=>{
+const b=document.createElement('button');
+b.className='travel-card';
+b.innerHTML=`${tp.icon} ${tp.name}`;
+b.onclick=()=>{player.position.set(tp.x,tp.y,tp.z);pVel={x:0,y:0,z:0};hide('oTravel');notify(`Traveled to ${tp.name}`,'ok');};
+grid.appendChild(b);
+});
+}
+
 
 const G=.03,SPD=.13,JMP=.4,FRC=.86;
 
@@ -311,7 +348,7 @@ const raw=localStorage.getItem(SAVE_KEY);
 if(raw){
 const data=JSON.parse(raw);
 if(data.P)Object.assign(P,data.P);
-if(data.settings)settings=data.settings;
+if(data.settings)settings={...settings,...data.settings,controls:{...settings.controls,...(data.settings.controls||{})},ai:{...settings.ai,...(data.settings.ai||{})},debug:{...settings.debug,...(data.settings.debug||{})},accessibility:{...settings.accessibility,...(data.settings.accessibility||{})},graphics:{...settings.graphics,...(data.settings.graphics||{})}};
 if(data.botProfiles)botProfiles=data.botProfiles;
 }
 const braw=localStorage.getItem(BOT_KEY);
@@ -400,12 +437,17 @@ solidPlatforms=[];
 if(IS_DEC){
 const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0xE8F4F8,.8));
 gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+const terrain=sMesh(new THREE.PlaneGeometry(220,220,48,48),mat(0x4CAF50,.92));
+terrain.rotation.x=-Math.PI/2;
+const va=terrain.geometry.attributes.position;
+for(let i=0;i<va.count;i++){const x=va.getX(i),z=va.getY(i);va.setZ(i,Math.sin(x*0.06)*1.3+Math.cos(z*0.05)*1.1);}
+va.needsUpdate=true;terrain.geometry.computeVertexNormals();terrain.position.y=-0.15;addMesh(terrain,true);
 const plazaR=18,plazaH=3;
 const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR+2,plazaH,32),mat(0x6D4C41,.5));
 plaza.position.y=plazaH/2;addMesh(plaza,true);
 solidPlatforms.push({mesh:plaza,radius:plazaR+2,topY:plazaH});
 buildXmasTree(0,plazaH,0);
-buildPortal(0,0,-42); buildMirror(42,0,0); buildArcade(-42,0,0);
+buildPortal(0,0,-42); buildMirror(42,0,0); buildArcade(-42,0,0); buildTravelNode(0,0,42);
 for(let i=0;i<30;i++){ const a=(i/30)*Math.PI*2+rnd(-.2,.2),r=55+rnd(0,45); buildPine(Math.cos(a)*r,Math.sin(a)*r); }
 for(let i=0;i<8;i++){ const a=rnd(0,Math.PI*2),r=30+rnd(0,35); buildSnowman(Math.cos(a)*r,Math.sin(a)*r); }
 for(let i=0;i<15;i++){ const a=rnd(0,Math.PI*2),r=24+rnd(0,50); buildPresent(Math.cos(a)*r,Math.sin(a)*r); }
@@ -413,6 +455,11 @@ for(let i=0;i<6;i++){ const a=(i/6)*Math.PI*2,r=30; buildLamp(Math.cos(a)*r,Math
 }else{
 const gnd=sMesh(new THREE.CircleGeometry(110,60),mat(0x388E3C));
 gnd.rotation.x=-Math.PI/2;addMesh(gnd,true);
+const terrain=sMesh(new THREE.PlaneGeometry(220,220,48,48),mat(0x4CAF50,.92));
+terrain.rotation.x=-Math.PI/2;
+const va=terrain.geometry.attributes.position;
+for(let i=0;i<va.count;i++){const x=va.getX(i),z=va.getY(i);va.setZ(i,Math.sin(x*0.06)*1.3+Math.cos(z*0.05)*1.1);}
+va.needsUpdate=true;terrain.geometry.computeVertexNormals();terrain.position.y=-0.15;addMesh(terrain,true);
 const plazaR=20,plazaH=1.5;
 const plaza=sMesh(new THREE.CylinderGeometry(plazaR,plazaR,plazaH,32),mat(0xCFD8DC));
 plaza.position.y=plazaH/2;addMesh(plaza,true);
@@ -426,7 +473,7 @@ const water=sMesh(new THREE.SphereGeometry(2.5,16,12,0,Math.PI*2,0,Math.PI/2),ma
 water.position.y=3.5; f.add(water);
 const lt=new THREE.PointLight(0x29B6F6,2,25); lt.position.y=5; f.add(lt);
 addMesh(f,true);
-buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0);
+buildPortal(0,0,-45); buildMirror(45,0,0); buildArcade(-45,0,0); buildTravelNode(0,0,42);
 for(let i=0;i<40;i++){
 const a=(i/40)*Math.PI*2+rnd(-.1,.1), r=45+rnd(0,55);
 const x=Math.cos(a)*r, z=Math.sin(a)*r;
@@ -497,6 +544,16 @@ const screen=sMesh(new THREE.BoxGeometry(3.5,2.5,.15),mat(0x00E676,.3));
 screen.position.set(0,4.5,1.6);g.add(screen);
 g.rotation.y=Math.PI/2;
 g.userData={interact:true,type:'arcade',text:'Practice',icon:'🕹️',r:10};
+scene.add(g);lobbyMeshes.push(g);interacts.push(g);
+}
+
+function buildTravelNode(x,y,z){
+const g=new THREE.Group();g.position.set(x,y,z);
+const base=sMesh(new THREE.CylinderGeometry(3.2,3.8,1.2,16),mat(0x263238,.4));
+base.position.y=.6;g.add(base);
+const sign=sMesh(new THREE.BoxGeometry(2.8,2.2,.25),mat(0x00BCD4,.3));
+sign.position.set(0,2.1,0);g.add(sign);
+g.userData={interact:true,type:'travel',text:'Fast Travel',icon:'🧭',r:10};
 scene.add(g);lobbyMeshes.push(g);interacts.push(g);
 }
 
@@ -577,7 +634,7 @@ bots.push({
 mesh,ch,name:botName,emoji:ch.emoji,color:ch.color,friend:friendNames.includes(botName),memory:botProfiles[botName]?.trust||0.4,
 score:0,isIt:false,tagImmune:0,stunned:0,
 vel:{x:0,y:0,z:0},grounded:true,eliminated:false,
-hillTime:0,target:null,aiTimer:0
+hillTime:0,target:null,aiTimer:0,playerFocus:0,lastTargetKind:'bot'
 });
 scene.add(mesh);
 }
@@ -586,7 +643,7 @@ scene.add(mesh);
 // ========== GROUND / PHYSICS ==========
 // THE key fix: ONE function determines ground height, no bouncing ever
 function getGroundY(pos){
-let gy=0;
+let gy=terrainHeightAt(pos);
 // Lobby solids
 if(state===ST.LOBBY){
 solidPlatforms.forEach(sp=>{
@@ -806,6 +863,7 @@ const t=near.userData.type;
 if(t==='portal'){show('oPortal');loadModes();}
 else if(t==='char'){show('oChar');loadChars();}
 else if(t==='arcade'){show('oArcade');loadArcade();}
+else if(t==='travel'){show('oTravel');loadTravel();}
 $('PROMPT')?.classList.remove('show');
 }
 
@@ -875,8 +933,8 @@ const draw=()=>{
 tabWrap.innerHTML='';
 tabs.forEach(t=>{const b=document.createElement('button');b.className='settings-tab'+(active===t?' on':'');b.textContent=t;b.onclick=()=>{active=t;draw();};tabWrap.appendChild(b);});
 let html='';
-if(active==='Controls')html=`<div class="settings-panel show"><div class="setting-row"><span>Left Handed Layout</span><input type="checkbox" ${settings.controls.leftHand?'checked':''} id="stLeft"></div><div class="setting-row"><span>Push Button</span><span>Enabled</span></div></div>`;
-if(active==='AI')html=`<div class="settings-panel show"><div class="setting-row"><span>Adaptive AI Learning</span><input type="checkbox" ${settings.ai.adaptive?'checked':''} id="stAiAd"></div><div class="setting-row"><span>Difficulty</span><input type="range" min="0.6" max="1.6" step="0.1" value="${settings.ai.difficulty}" id="stAiDiff"></div></div>`;
+if(active==='Controls')html=`<div class="settings-panel show"><div class="setting-row"><span>Left Handed Layout</span><input type="checkbox" ${settings.controls.leftHand?'checked':''} id="stLeft"></div><div class="setting-row"><span>First Person Camera</span><input type="checkbox" ${settings.controls.firstPerson?'checked':''} id="stFp"></div></div>`;
+if(active==='AI')html=`<div class="settings-panel show"><div class="setting-row"><span>Adaptive AI Learning</span><input type="checkbox" ${settings.ai.adaptive?'checked':''} id="stAiAd"></div><div class="setting-row"><span>Difficulty</span><input type="range" min="0.6" max="1.6" step="0.1" value="${settings.ai.difficulty}" id="stAiDiff"></div><div class="setting-row"><span>Bot Team Play</span><input type="range" min="0" max="1" step="0.05" value="${settings.ai.teamplay}" id="stAiTeam"></div></div>`;
 if(active==='Debug')html=`<div class="settings-panel show"><div class="setting-row"><span>Minimap</span><input type="checkbox" ${settings.debug.minimap?'checked':''} id="stMap"></div><div class="setting-row"><span>Debug API</span><span>window.DEBUG</span></div></div>`;
 if(active==='Accessibility')html=`<div class="settings-panel show"><div class="setting-row"><span>High Contrast HUD</span><input type="checkbox" ${settings.accessibility.highContrast?'checked':''} id="stContrast"></div><div class="setting-row"><span>Larger Text</span><span>Auto mobile</span></div></div>`;
 if(active==='Graphics')html=`<div class="settings-panel show"><div class="setting-row"><span>Classic</span><button id="gpClassic">Apply</button></div><div class="setting-row"><span>HD</span><button id="gpHd">Apply</button></div><div class="setting-row"><span>Deluxe HD</span><button id="gpDeluxe">Apply</button></div></div>`;
@@ -884,6 +942,8 @@ body.innerHTML=html;
 $('stLeft')?.addEventListener('change',e=>{settings.controls.leftHand=e.target.checked;const left=settings.controls.leftHand;$('joyL').style.left=left?'': '18px';$('joyL').style.right=left?'18px':'';$('joyR').style.right=left?'':'18px';$('joyR').style.left=left?'18px':'';saveState();});
 $('stAiAd')?.addEventListener('change',e=>{settings.ai.adaptive=e.target.checked;saveState();});
 $('stAiDiff')?.addEventListener('input',e=>{settings.ai.difficulty=parseFloat(e.target.value);saveState();});
+$('stAiTeam')?.addEventListener('input',e=>{settings.ai.teamplay=parseFloat(e.target.value);saveState();});
+$('stFp')?.addEventListener('change',e=>{settings.controls.firstPerson=e.target.checked;$('FPB')?.classList.toggle('show',settings.controls.firstPerson);saveState();});
 $('stMap')?.addEventListener('change',e=>{settings.debug.minimap=e.target.checked;saveState();});
 $('stContrast')?.addEventListener('change',e=>{settings.accessibility.highContrast=e.target.checked;document.body.style.filter=settings.accessibility.highContrast?'contrast(1.2) saturate(1.1)':'none';saveState();});
 $('gpClassic')?.addEventListener('click',()=>applyGraphicsPreset('classic'));
@@ -941,6 +1001,7 @@ setTimeout(()=>f.remove(),9000);
 
 // ========== LOADING ==========
 function startLoad(){
+$('FPB')?.classList.toggle('show',!!settings.controls.firstPerson);
 let p=0;
 const iv=setInterval(()=>{
 p+=rnd(16,28);if(p>100)p=100;
@@ -988,7 +1049,7 @@ const it=bots[Math.floor(Math.random()*bots.length)];
 it.isIt=true;it.tagImmune=4;
 updInd();
 }
-if(curGame.type==='pads'){resetPads();updInd();}
+if(curGame.type==='pads'){musicOn=true;resetPads();updInd();}
 updateSB();
 const tEl=$('gTime');
 const iv=setInterval(()=>{
@@ -997,7 +1058,7 @@ gTimer--;
 if(tEl){tEl.textContent=Math.max(0,gTimer);tEl.className='g-time';if(gTimer<=10)tEl.classList.add('danger');else if(gTimer<=20)tEl.classList.add('warn');}
 if(curGame?.type==='pads'&&gTimer%11===0&&gTimer>0&&gTimer<curGame.dur){
 musicOn=!musicOn;
-if(!musicOn){padCount=Math.max(2,padCount-2);notify('🎵 MUSIC STOPPED!','inf');setTimeout(()=>checkPads(),1200);}
+if(!musicOn){padCount=Math.max(2,padCount-2);resetPads();notify('🎵 MUSIC STOPPED!','inf');setTimeout(()=>checkPads(),1200);}
 else{notify('🎵 Playing!','inf');resetPads();}
 updInd();
 }
@@ -1063,6 +1124,7 @@ const R=game.type==='sumo'?50:85;
 // Ground
 const gnd=sMesh(new THREE.CircleGeometry(R,60),mat({collect:0x2E7D32,sumo:0x5D4037,hill:0xBF360C,tag:0x006064,pads:0x4A148C}[game.type]||0x2E7D32,.8));
 gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;addMesh(gnd,false);solidPlatforms.push({mesh:gnd,radius:R,topY:0});
+if(game.type!=='sumo'&&game.type!=='pads'){const terrain=sMesh(new THREE.PlaneGeometry(R*2,R*2,38,38),mat(0x5D8C41,.88));terrain.rotation.x=-Math.PI/2;const v=terrain.geometry.attributes.position;for(let i=0;i<v.count;i++){const x=v.getX(i),z=v.getY(i);v.setZ(i,Math.sin(x*0.08)*1.4+Math.cos(z*0.06)*1.2);}v.needsUpdate=true;terrain.geometry.computeVertexNormals();terrain.position.y=-0.1;addMesh(terrain,false);}
 // Border
 const bor=sMesh(new THREE.TorusGeometry(R,1.5,10,60),mat(0xFFD700,.4));
 bor.rotation.x=Math.PI/2;bor.position.y=.75;addMesh(bor,false);
@@ -1112,11 +1174,12 @@ scene.add(pad);gameMeshes.push(pad);pads.push(pad);
 }
 
 function resetPads(){
-pads.forEach(p=>{p.userData.active=true;p.material.color.setHex(0x9C27B0);p.position.y=.6;});
+pads.forEach(p=>{p.userData.active=false;p.material.color.setHex(0x6A1B9A);p.position.y=-.45;});
+if(musicOn)return;
 const toOff=pads.length-padCount;
 const sh=shuffle([...pads]);
-for(let i=0;i<toOff;i++){sh[i].userData.active=false;sh[i].material.color.setHex(0x333333);sh[i].position.y=-.5;}
-pads.filter(p=>p.userData.active).forEach(p=>p.material.color.setHex(0x00FF00));
+sh.forEach(p=>{p.userData.active=true;p.position.y=.6;p.material.color.setHex(0x00FF00);});
+for(let i=0;i<toOff;i++){sh[i].userData.active=false;sh[i].material.color.setHex(0x333333);sh[i].position.y=-.7;}
 }
 
 
@@ -1174,9 +1237,9 @@ scene.add(mesh);gameMeshes.push(mesh);stars.push(mesh);
 // ========== BOT AI ==========
 
 function runBotAI(dt){
-const playerSkill=Math.min(1.6,0.8+(P.score/Math.max(1,curGame?.dur||60))/40);
-const adapt=(settings.ai.adaptive?clamp(playerSkill,0.8,1.5):1)*settings.ai.difficulty;
-const spd_base=SPD*(curGame?.type==='pads'?.65:1)*(curGame?.type==='sumo'?.78:1)*adapt;
+const playerSkill=Math.min(1.6,0.85+(P.score/Math.max(1,curGame?.dur||60))/42);
+const adapt=(settings.ai.adaptive?clamp(playerSkill,0.85,1.45):1)*settings.ai.difficulty;
+const spd_base=SPD*(curGame?.type==='pads'?.72:1)*(curGame?.type==='sumo'?.86:1)*adapt;
 bots.forEach((b,idx)=>{
 if(b.eliminated){b.mesh.visible=true;return;}
 if(b.stunned>0){b.stunned-=dt;return;}
@@ -1193,8 +1256,10 @@ b.target={x:rnd(-5,5),z:rnd(-5,5)};
 }else if(curGame?.type==='tag'){
 if(b.isIt){
 let best=null,bestD=Infinity;
-if(!P.isIt&&P.tagImmune<=0){const dd=d2(b.mesh.position,player.position);if(dd<bestD){bestD=dd;best=player.position;}}
-bots.forEach(o=>{if(o!==b&&!o.isIt&&!o.eliminated&&o.tagImmune<=0){const dd=d2(b.mesh.position,o.mesh.position);if(dd<bestD){bestD=dd;best=o.mesh.position;}}});
+const candidateTargets=[];
+if(!P.isIt&&P.tagImmune<=0){candidateTargets.push({pos:player.position,kind:'player'});}
+bots.forEach(o=>{if(o!==b&&!o.isIt&&!o.eliminated&&o.tagImmune<=0)candidateTargets.push({pos:o.mesh.position,kind:'bot'});});
+candidateTargets.forEach(c=>{const dd=d2(b.mesh.position,c.pos)*(c.kind==='player'?(1.2+Math.max(0,(b.playerFocus||0)-0.35)):1);if(dd<bestD){bestD=dd;best=c.pos;b.lastTargetKind=c.kind;}});
 if(best)b.target={x:best.x,z:best.z};
 }else{
 const it=bots.find(o=>o.isIt)||(P.isIt?player:null);
@@ -1216,8 +1281,9 @@ if(b.target){
 const dx=b.target.x-b.mesh.position.x,dz=b.target.z-b.mesh.position.z,dd=Math.sqrt(dx*dx+dz*dz);
 if(dd>1.2){
 const s=spd_base*(b.ch.spd/80);
-b.mesh.position.x+=(dx/dd)*s;
-b.mesh.position.z+=(dz/dd)*s;
+b.vel.x+=(dx/dd)*s*0.2;
+b.vel.z+=(dz/dd)*s*0.2;
+clampVelocityXZ(b.vel,s*1.9);
 b.mesh.rotation.y=Math.atan2(dx,dz);
 }
 }
@@ -1233,6 +1299,7 @@ if(state===ST.GAME && !b.isIt && Math.random() < 0.02) {
     }
   });
 }
+if(b.lastTargetKind==='player')b.playerFocus=Math.min(1,(b.playerFocus||0)+0.03*(1-settings.ai.teamplay));else b.playerFocus=Math.max(0,(b.playerFocus||0)-0.05);
 applyBotPhysics(b);
 const bd=d2(b.mesh.position,{x:0,z:0});
 const sumoR = (curGame?.type==='sumo'?28:70);
@@ -1297,7 +1364,8 @@ const token=gameToken;setTimeout(()=>{if(state===ST.GAME&&curGame?.type==='colle
 }
 });
 if(curGame?.type==='hill'&&hillMesh){
-if(Math.abs(pVel.x)<0.001&&Math.abs(joy.l.x)>0.2){pVel.x+=joy.l.x*0.02;pVel.z+=joy.l.y*0.02;}
+const moveMag=Math.hypot(joy.l.x,joy.l.y);
+if(moveMag>0.15){const ang=Math.atan2(joy.l.x,joy.l.y)+camAng;pVel.x+=Math.sin(ang)*0.03;pVel.z+=Math.cos(ang)*0.03;clampVelocityXZ(pVel,0.32);if(P.stunned>0.12)P.stunned=0.12;}
 const hd=d2(player.position,{x:0,z:0});
 if(hd<hillMesh.radius&&player.position.y>=hillMesh.topY-.5){
 P.hillTime+=dt;
@@ -1338,6 +1406,7 @@ if(curGame?.type==='pads'){
   if(musicOn){
     const pd=d2(player.position,{x:0,z:0});
     if(pd>70){player.position.x*=70/pd;player.position.z*=70/pd;}
+    pads.forEach(p=>{if(d2(player.position,p.position)<5.2){const dx=player.position.x-p.position.x,dz=player.position.z-p.position.z,dd=Math.max(0.2,Math.hypot(dx,dz));player.position.x=p.position.x+(dx/dd)*5.4;player.position.z=p.position.z+(dz/dd)*5.4;}});
   }
 }
 if(curGame?.type==='collect'){
@@ -1499,12 +1568,13 @@ const c=curC();
 const inp=joy.l;
 const sprint=(P.sprinting&&P.stamina>0?1.4:1)*(P.buffTime>0?1.3:1);
 if(P.sprinting&&P.stamina>0)P.stamina=Math.max(0,P.stamina-dt*30);
-const spd=SPD*(c.spd/80)*sprint*(curGame?.type==='pads'?!musicOn?0.2:0.72:1);
+const spd=SPD*(c.spd/80)*sprint*(curGame?.type==='pads'?!musicOn?0.18:0.68:1);
 const mag=Math.sqrt(inp.x**2+inp.y**2);
 if(mag>.1){
 const ang=Math.atan2(inp.x,inp.y)+camAng;
-pVel.x+=Math.sin(ang)*mag*spd;
-pVel.z+=Math.cos(ang)*mag*spd;
+pVel.x+=Math.sin(ang)*mag*spd*0.22;
+pVel.z+=Math.cos(ang)*mag*spd*0.22;
+clampVelocityXZ(pVel,spd*1.95);
 player.rotation.y=ang;
 }
 if(Math.abs(joy.r.x)>.1)camAng-=joy.r.x*.035;
@@ -1522,14 +1592,22 @@ if(p.userData.m)p.userData.m.opacity=p.userData.life;
 if(p.userData.life<=0){scene.remove(p);particles3d.splice(i,1);}
 }
 // Camera
+if(settings.controls.firstPerson){
+const headY=player.position.y+2.15;
+const fdx=Math.sin(camAng),fdz=Math.cos(camAng);
+cam.position.x+=(player.position.x-fdx*0.2-cam.position.x)*0.32;
+cam.position.y+=(headY-cam.position.y)*0.32;
+cam.position.z+=(player.position.z-fdz*0.2-cam.position.z)*0.32;
+}else{
 const tX=player.position.x+Math.sin(camAng)*22;
 const tZ=player.position.z+Math.cos(camAng)*22;
 const tY=player.position.y+16;
 cam.position.x+=(tX-cam.position.x)*.12;
 cam.position.y+=(tY-cam.position.y)*.12;
 cam.position.z+=(tZ-cam.position.z)*.12;
+}
 if(shakeAmt>0){cam.position.x+=rnd(-shakeAmt,shakeAmt);cam.position.y+=rnd(-shakeAmt,shakeAmt);shakeAmt*=.8;if(shakeAmt<.01)shakeAmt=0;}
-cam.lookAt(player.position.x,player.position.y+2.5,player.position.z);
+if(settings.controls.firstPerson){cam.lookAt(player.position.x+Math.sin(camAng)*20,player.position.y+2.1,player.position.z+Math.cos(camAng)*20);}else{cam.lookAt(player.position.x,player.position.y+2.5,player.position.z);}
 if(sun){sun.position.set(player.position.x+80,120,player.position.z+80);sun.target.position.copy(player.position);sun.target.updateMatrixWorld();}
 ren.render(scene,cam);
 }
