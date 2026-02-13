@@ -1,307 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>RIFT RUCKUS - Party Animal Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script>
-    tailwind.config = {
-        darkMode: "class",
-        theme: {
-            extend: {
-                colors: {
-                    "primary": "#f2f20d",
-                    "background-dark": "#121212",
-                    "card-dark": "#1e1e1e",
-                },
-                fontFamily: {
-                    "display": ["Spline Sans", "sans-serif"]
-                }
-            },
-        },
-    }
-</script>
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-user-select: none; user-select: none; }
-    html, body { overflow: hidden; height: 100%; width: 100%; font-family: 'Spline Sans', sans-serif; background: #000; }
-    canvas { display: block; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
-    .vignette { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 50; background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%); }
-    .gone { opacity: 0 !important; pointer-events: none !important; }
-
-    .joy-area { position: fixed; bottom: 40px; width: 140px; height: 140px; z-index: 200; }
-    .joy-ring { position: absolute; width: 100%; height: 100%; border-radius: 4rem; background: rgba(255,255,255,0.1); border: 4px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
-    .joy-knob { position: absolute; width: 60px; height: 60px; border-radius: 2rem; background: white; box-shadow: 0 8px 25px rgba(0,0,0,0.3); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
-
-    .btn-act { width: 64px; height: 64px; border-radius: 50%; border: none; font-size: 28px; cursor: pointer; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
-    .btn-act:active { transform: scale(0.9); }
-    .btn-cd { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: white; }
-    .btn-act.cd .btn-cd { display: flex; }
-
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
-    .overlay.show { display: flex; }
-
-    #socialTabs { background: rgba(0,0,0,0.4); box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
-    .social-row { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .social-row:hover { transform: translateX(5px); background: rgba(255,255,255,0.08); border-color: rgba(242,242,13,0.3); }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .status-online { background: #4ade80; box-shadow: 0 0 10px #4ade80; animation: pulse-green 2s infinite; }
-    @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .g-emoji { background-position: center; background-repeat: no-repeat; background-size: contain; display: inline-block; }
-
-    #fps { position: fixed; top: 10px; right: 10px; color: #f2f20d; font-weight: 800; font-size: 12px; z-index: 1000; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 8px; }
-
-    @media (max-width: 640px) {
-        #hud { transform: scale(0.75); transform-origin: top left; z-index: 100 !important; }
-        #hud > div:first-child { max-width: 180px; }
-        #hud .size-16 { width: 3rem; height: 3rem; border-radius: 1rem; }
-        #hud .w-24 { width: 4rem; }
-        #hName { font-size: 1rem; }
-        #hud .size-14 { width: 3rem; height: 3rem; }
-
-        .joy-area { transform: scale(0.8); transform-origin: bottom left; bottom: 30px; left: 15px; }
-        #BTNS { transform: scale(0.8); transform-origin: bottom right; bottom: 30px; right: 15px; flex-direction: column !important; align-items: flex-end !important; gap: 12px !important; }
-        #BTNS > div { flex-direction: column !important; gap: 10px !important; }
-        #bJump { width: 100px !important; height: 100px !important; border-radius: 2rem !important; }
-
-        .overlay > div { width: 95% !important; max-height: 95% !important; border-radius: 2rem !important; }
-        #SB { transform: scale(0.6); transform-origin: top left; top: 70px; left: 10px; }
-        #PROMPT { transform: translateX(-50%) scale(0.7); transform-origin: bottom center; left: 50%; bottom: 120px; min-width: 90%; }
-        #CDOWN .scale-150 { transform: scale(1.1); }
-        .cd-num { font-size: 80px; }
-    }
-    .cd-num { font-size: 120px; font-weight: 900; color: #f2f20d; font-style: italic; text-shadow: 0 0 30px rgba(242,242,13,0.5); transform: scale(0); animation: cd-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    @keyframes cd-in { to { transform: scale(1); } }
-    .cd-go { color: #fff; text-shadow: 0 0 30px #fff; }
-</style>
-</head>
-<body class="text-white">
-<div class="vignette"></div>
-<div id="fps" style="display:none;"></div>
-<div id="NOTIFS" class="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] flex flex-col gap-2 pointer-events-none"></div>
-<div id="PARTS" class="fixed inset-0 pointer-events-none z-[400]"></div>
-
-<!-- HUD -->
-<div id='hud' class='fixed top-0 left-0 right-0 p-6 z-[100] pointer-events-none flex items-start justify-between'>
-    <div class='flex items-center gap-4 bg-white/10 backdrop-blur-2xl p-2 pr-8 rounded-[2.5rem] border-2 border-white/20 pointer-events-auto cursor-pointer shadow-2xl hover:scale-105 transition-all group' onclick='show("oChar"); window.loadChars();'>
-        <div class='size-16 rounded-[2rem] bg-gradient-to-br from-yellow-300 to-yellow-500 border-4 border-white/30 g-emoji shadow-lg flex items-center justify-center overflow-hidden' id='hAvatar'></div>
-        <div class='flex flex-col'>
-            <span class='text-white font-black text-xl italic tracking-tighter drop-shadow-md' id='hName'>RUNNER</span>
-            <div class='flex items-center gap-2'>
-                <div class='h-2 w-24 bg-black/40 rounded-full overflow-hidden border border-white/10'>
-                    <div id="hBar" class='h-full bg-primary rounded-full' style='width: 40%'></div>
-                </div>
-                <span class='text-primary font-black text-[10px] tracking-widest uppercase drop-shadow-sm'>LV.<span id='hLv'>1</span></span>
-            </div>
-        </div>
-    </div>
-
-    <div class='flex gap-3 pointer-events-auto'>
-        <div class='bg-white/10 backdrop-blur-2xl px-6 py-3 rounded-[2rem] border-2 border-white/20 flex items-center gap-3 shadow-2xl'>
-            <span class='text-2xl drop-shadow-md'>💎</span>
-            <span class='text-white font-black text-lg tracking-tighter' id='hGems'>0</span>
-        </div>
-        <button id="social-btn" class="bg-white/10 backdrop-blur-2xl size-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:text-primary transition-all shadow-2xl active:scale-90" onclick="openSocial()">
-            <span class="material-symbols-outlined text-3xl">group</span>
-        </button>
-        <button class='bg-white/10 backdrop-blur-2xl size-14 rounded-full border-2 border-white/20 flex items-center justify-center text-white hover:text-primary transition-all shadow-2xl active:scale-90' onclick='show("oSettings")'>
-            <span class='material-symbols-outlined text-3xl'>settings</span>
-        </button>
-    </div>
-</div>
-
-<div class="overlay" id="oChar">
-    <div class="relative flex h-full max-h-[90vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
-        <header class="flex items-center justify-between p-6 pt-8 pb-4 shrink-0">
-            <button class="text-white hover:text-primary transition-colors flex items-center justify-center size-12 rounded-full bg-white/5" onclick="hide('oChar')">
-                <span class="material-symbols-outlined text-2xl">arrow_back</span>
-            </button>
-            <h1 class="text-2xl font-black italic tracking-tighter">SELECT RUNNER</h1>
-            <div class="size-12"></div>
-        </header>
-        <main class="flex-1 flex flex-col px-6 pb-24 overflow-y-auto scrollbar-hide">
-            <div class="grid grid-cols-3 gap-3 mb-8" id="charList"></div>
-            <div id="charDetail" class="flex flex-col items-center"></div>
-        </main>
-        <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#121212] via-[#121212]/95 to-transparent">
-            <button id="btnPlayAs" class="w-full bg-primary hover:scale-[1.02] active:scale-95 transition-all text-black font-black text-xl py-5 rounded-full shadow-[0_8px_25px_rgba(242,242,13,0.3)]">SELECT RUNNER</button>
-        </div>
-    </div>
-</div>
-
-<div class="overlay" id="oSettings">
-    <div class="relative flex h-full max-h-[85vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
-        <header class="flex items-center justify-between p-6 pt-8 pb-4 shrink-0">
-            <button class="text-white hover:text-primary transition-colors flex items-center justify-center size-12 rounded-full bg-white/5" onclick="hide('oSettings')">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-            <h1 class="text-2xl font-black italic tracking-tighter">SETTINGS</h1>
-            <div class="size-12"></div>
-        </header>
-        <main class="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide space-y-6">
-            <div class="space-y-3">
-                <label class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Graphics Mode</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button class="py-3 rounded-2xl bg-white/5 border border-white/5 text-xs font-black hover:border-primary/50" onclick="setPreset('classic')">CLASSIC</button>
-                    <button class="py-3 rounded-2xl bg-white/5 border border-white/5 text-xs font-black hover:border-primary/50" onclick="setPreset('hd')">HD</button>
-                    <button class="py-3 rounded-2xl bg-white/5 border border-white/5 text-xs font-black hover:border-primary/50" onclick="setPreset('deluxe')">DELUXE</button>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5">
-                    <div><p class="font-black text-sm tracking-tight">Shadows</p><p class="text-[10px] text-gray-500 font-bold uppercase">Real-time lighting</p></div>
-                    <input type="checkbox" id="sShadow" onchange="updSet()" class="w-7 h-7 rounded-lg bg-black border-white/10 text-primary focus:ring-primary">
-                </div>
-                <div class="flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5">
-                    <div><p class="font-black text-sm tracking-tight">Left-Hand Mode</p><p class="text-[10px] text-gray-500 font-bold uppercase">Swap controls</p></div>
-                    <input type="checkbox" id="sLeft" onchange="updSet()" class="w-7 h-7 rounded-lg bg-black border-white/10 text-primary focus:ring-primary">
-                </div>
-                <div class="flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5">
-                    <div><p class="font-black text-sm tracking-tight">Accessibility</p><p class="text-[10px] text-gray-500 font-bold uppercase">Larger UI text</p></div>
-                    <input type="checkbox" id="sAcc" onchange="updSet()" class="w-7 h-7 rounded-lg bg-black border-white/10 text-primary focus:ring-primary">
-                </div>
-                <div class="flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5">
-                    <div><p class="font-black text-sm tracking-tight">Debug Info</p><p class="text-[10px] text-gray-500 font-bold uppercase">Show FPS Counter</p></div>
-                    <input type="checkbox" id="sDebug" onchange="updSet()" class="w-7 h-7 rounded-lg bg-black border-white/10 text-primary focus:ring-primary">
-                </div>
-            </div>
-            <div class="space-y-3">
-                <label class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Bot Difficulty</label>
-                <select id="sAI" onchange="updSet()" class="w-full p-5 bg-white/5 border border-white/10 rounded-3xl font-black text-white focus:ring-primary outline-none uppercase text-sm">
-                    <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
-                </select>
-            </div>
-        </main>
-    </div>
-</div>
-
-<div class="overlay" id="oPortal">
-    <div class="relative flex h-full max-h-[70vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
-        <header class="flex items-center justify-between p-6 pt-8 pb-4 shrink-0">
-            <button class="text-white hover:text-primary transition-colors flex items-center justify-center size-12 rounded-full bg-white/5" onclick="hide('oPortal')">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-            <h1 class="text-2xl font-black italic tracking-tighter">SELECT MODE</h1>
-            <div class="size-12"></div>
-        </header>
-        <main class="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide" id="modeList"></main>
-    </div>
-</div>
-
-<div class="overlay" id="oArcade">
-    <div class="relative flex h-full max-h-[85vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
-        <header class="flex items-center justify-between p-6 pt-8 pb-4 shrink-0">
-            <button class="text-white hover:text-primary transition-colors flex items-center justify-center size-12 rounded-full bg-white/5" onclick="hide('oArcade')">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-            <h1 class="text-2xl font-black italic tracking-tighter">PRACTICE ARENA</h1>
-            <div class="size-12"></div>
-        </header>
-        <main class="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide">
-            <div class="text-center py-12 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-                Practice mode coming soon!
-            </div>
-        </main>
-    </div>
-</div>
-
-<div class="overlay" id="oSocial">
-    <div class="relative flex h-full max-h-[85vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-gradient-to-b from-[#1e1e1e] to-[#121212] shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-[3rem] border border-white/10 text-white">
-        <header class="p-8 pb-4 shrink-0">
-            <div class="flex items-center justify-between mb-6">
-                 <h1 class="text-3xl font-black italic tracking-tighter bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">SOCIAL HUB</h1>
-                 <button class="text-white/50 hover:text-white transition-colors size-10 rounded-full bg-white/5 flex items-center justify-center" onclick="hide('oSocial')">
-                    <span class="material-symbols-outlined text-2xl">close</span>
-                </button>
-            </div>
-            <div class="flex gap-2 p-1 bg-black/40 rounded-2xl border border-white/5" id="socialTabs"></div>
-        </header>
-        <main class="flex-1 px-8 pb-8 overflow-y-auto scrollbar-hide" id="socialList"></main>
-    </div>
-</div>
-
-<div id="SIDE" class="fixed inset-0 z-[400] pointer-events-none hidden"></div>
-<div class="overlay" id="CDOWN">
-    <div class="text-center scale-150">
-        <h2 class="text-primary font-black italic text-2xl tracking-widest mb-2" id="cdName">GAME</h2>
-        <p class="text-white font-bold text-[10px] uppercase tracking-[0.3em] mb-12 opacity-50" id="cdTip">GET READY!</p>
-        <div class="cd-num" id="cdNum">3</div>
-    </div>
-</div>
-
-<div class="overlay" id="RES">
-    <div class="relative flex h-full max-h-[95vh] w-full flex-col overflow-hidden max-w-md mx-auto bg-[#121212] shadow-2xl rounded-[2.5rem] border border-white/10 text-white">
-        <div class="flex-1 overflow-y-auto scrollbar-hide px-6 pt-12 pb-32">
-            <div class="text-center mb-8">
-                <h2 class="text-5xl font-black italic tracking-tighter text-primary mb-2" id="resT">VICTORY!</h2>
-                <p class="text-xl font-bold text-gray-500 uppercase tracking-widest" id="resS">#1 - 1500 PTS</p>
-            </div>
-            <div id="resPod" class="space-y-3 mb-8"></div>
-            <div id="resRew" class="flex justify-center mb-4"></div>
-        </div>
-        <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-[#121212] via-[#121212]/95 to-transparent flex gap-4">
-            <button onclick="backToLobby()" class="flex-1 bg-white/10 hover:bg-white/20 py-5 rounded-full font-black uppercase text-sm tracking-widest transition-all">Lobby</button>
-            <button id="resNext" class="flex-[2] bg-primary text-black py-5 rounded-full font-black uppercase text-sm tracking-widest shadow-lg shadow-primary/20 transition-all">Next Rift</button>
-        </div>
-    </div>
-</div>
-
-<div class="ld fixed inset-0 bg-[#121212] z-[1000] flex flex-col items-center justify-center transition-all duration-700" id="LD">
-    <div class="ld-logo text-7xl mb-6 animate-bounce" id="ldLogo">🌀</div>
-    <div class="ld-title text-5xl font-black italic tracking-tighter text-white mb-1">RIFT RUCKUS</div>
-    <div class="ld-sub text-primary text-[10px] font-black tracking-[0.4em] uppercase mb-10" id="ldSub">RIFT EDITION</div>
-    <div class="w-64 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
-        <div class="ld-fill h-full bg-primary rounded-full transition-all duration-300 shadow-[0_0_10px_#f2f20d]" id="ldFill" style="width:0%"></div>
-    </div>
-</div>
-
-<canvas id="C"></canvas>
-
-<div id="GHUD" class="fixed top-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-xl px-8 py-3 rounded-3xl border border-white/10 hidden z-[150] shadow-2xl">
-    <div class="flex flex-col items-center">
-        <div class="text-white font-black italic text-sm tracking-tight uppercase leading-tight" id="gTitle">GAME</div>
-        <div class="text-primary font-black text-3xl tabular-nums" id="gTime">00</div>
-    </div>
-</div>
-
-<div id="IND" class="fixed top-32 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 text-white font-black text-xs tracking-[0.2em] hidden z-[150] uppercase"></div>
-
-<div id="SB" class="fixed top-24 left-4 bg-black/50 backdrop-blur-lg p-4 rounded-[2rem] border border-white/10 hidden z-[90] min-w-[160px] shadow-2xl">
-    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">Leaderboard</div>
-    <div id="sbBody" class="space-y-1.5"></div>
-</div>
-
-<div id="MM" class="fixed bottom-32 left-4 size-28 bg-black/50 backdrop-blur-md border border-white/10 rounded-[2rem] hidden z-90 overflow-hidden shadow-2xl">
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2.5 bg-primary rounded-full shadow-[0_0_10px_#f2f20d] border-2 border-white z-10"></div>
-</div>
-
-<div class="joy-area" id="joyL"><div class="joy-ring"></div><div class="joy-knob" id="knobL"></div></div>
-<div class="joy-area" id="joyR"><div class="joy-ring"></div><div class="joy-knob" id="knobR"></div></div>
-
-<div id='BTNS' class='fixed bottom-12 right-12 flex items-end gap-6 z-[200]'>
-    <div class='flex flex-col gap-6'>
-        <button class='btn-act size-20 rounded-[2rem] bg-gradient-to-br from-red-400 to-red-600 border-4 border-white/30 shadow-2xl flex items-center justify-center text-4xl active:scale-90 transition-all hover:scale-105' id='bGrab'>🤜<div class='btn-cd' id='cdGrab'></div></button>
-        <button class='btn-act size-20 rounded-[2rem] bg-gradient-to-br from-purple-400 to-purple-600 border-4 border-white/30 shadow-2xl flex items-center justify-center text-4xl active:scale-90 transition-all hover:scale-105' id='bSkill'>✨<div class='btn-cd' id='cdSkill'></div></button>
-    </div>
-    <button class='btn-act size-32 rounded-[3rem] bg-gradient-to-br from-blue-400 to-blue-600 border-4 border-white/30 shadow-2xl flex items-center justify-center text-6xl active:scale-90 transition-all hover:scale-105' id='bJump'>🦘<div class='btn-cd' id='cdJump'></div></button>
-</div>
-
-<div id="PROMPT" class="fixed bottom-64 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-2xl border-2 border-white/10 px-8 py-5 rounded-[2.5rem] hidden items-center gap-6 z-[150] shadow-2xl min-w-[300px]">
-    <div class="size-14 rounded-2xl bg-primary/20 flex items-center justify-center shadow-inner" id="prIcon"></div>
-    <div class="flex-1 flex flex-col">
-        <span class="text-[10px] text-primary font-black tracking-widest uppercase">Action Available</span>
-        <span class="text-white font-black text-lg tracking-tight uppercase" id="prText">INTERACT</span>
-    </div>
-    <button id="prGo" class="bg-primary text-black font-black text-sm px-8 py-3 rounded-full shadow-lg shadow-primary/30 active:scale-95 transition-all">GO</button>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
     const $ = id => document.getElementById(id);
     const esc = t => String(t).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     const getGvEmoji = e => `data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='50%25' x='50%25' dominant-baseline='central' text-anchor='middle' font-size='80'%3E${encodeURIComponent(e)}%3C/text%3E%3C/svg%3E`;
@@ -327,7 +23,7 @@
 
     function flash(id, ms) { const e=$(id); if(e) { e.classList.add('on'); setTimeout(() => e.classList.remove('on'), ms); } }
 
-    const CHARS = [{"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5}, {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8}, {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4}, {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3}, {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6}, {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}, {"id": "santa", "name": "Santa", "emoji": "🎅", "role": "Special", "color": 15158332, "spd": 75, "pow": 70, "jmp": 70, "skill": "Gift", "sType": "buff", "sCD": 10}];
+    const CHARS = [{"id": "glitch", "name": "Glitch", "emoji": "😎", "role": "Speed", "color": 6056896, "spd": 95, "pow": 50, "jmp": 80, "skill": "Blink", "sType": "tele", "sCD": 5}, {"id": "harold", "name": "Harold", "emoji": "🦣", "role": "Tank", "color": 7951688, "spd": 45, "pow": 95, "jmp": 40, "skill": "Quake", "sType": "stun", "sCD": 8}, {"id": "sally", "name": "Sally", "emoji": "🐍", "role": "Speed", "color": 5025616, "spd": 90, "pow": 60, "jmp": 70, "skill": "Venom Dash", "sType": "dash", "sCD": 4}, {"id": "blobby", "name": "Blobby", "emoji": "🟣", "role": "Jumper", "color": 10233776, "spd": 65, "pow": 50, "jmp": 100, "skill": "Super Bounce", "sType": "jump", "sCD": 3}, {"id": "nampy", "name": "Nampy", "emoji": "🥷", "role": "Stealth", "color": 2171169, "spd": 85, "pow": 60, "jmp": 90, "skill": "Smoke Screen", "sType": "smoke", "sCD": 6}, {"id": "panee", "name": "Panee", "emoji": "🦔", "role": "Defender", "color": 16754470, "spd": 70, "pow": 80, "jmp": 60, "skill": "Spike Blast", "sType": "knock", "sCD": 5}];
     const GAMES = [
         { id: 'stars', name: '⭐ STAR COLLECTOR', tip: 'COLLECT STARS! GOLD = 30 PTS!', dur: 50, type: 'collect' },
         { id: 'sumo', name: '💪 SUMO RING', tip: 'PUSH ENEMIES OUT OF THE RING!', dur: 55, type: 'sumo' },
@@ -405,25 +101,11 @@
     function buildArcade(x, y, z) { const g = new THREE.Group(); g.position.set(x, y, z); g.add(sMesh(new THREE.BoxGeometry(5, 6.5, 3), mat(0x1A237E, .5))); g.children[0].position.y = 3.25; const s = sMesh(new THREE.BoxGeometry(3.5, 2.5, .15), mat(0x00E676, .3)); s.position.set(0, 4.5, 1.6); g.add(s); g.rotation.y = 1.57; g.userData = { type: 'arcade', text: 'PRACTICE', icon: 'joystick', r: 10 }; addMesh(g, true); interacts.push(g); }
 
     function spawnPlayer() { if (player) scene.remove(player); player = makeChar(curC(), 'YOU'); player.position.set(0, 3.5, 22); scene.add(player); }
-    function spawnBots(n) { bots.forEach(b => scene.remove(b.mesh)); bots = []; const pool = CHARS.filter(c => c.id !== P.charId); for (let i = 0; i < n; i++) { const ch = pool[i % pool.length], name = BOT_NAMES[i % BOT_NAMES.length], mesh = makeChar(ch, name, true); mesh.position.set(Math.cos(i / n * 6.28) * 25, 5, Math.sin(i / n * 6.28) * 25); bots.push({ mesh, ch, name, emoji: ch.emoji, score: 0, stunned: 0, vel: { x: 0, y: 0, z: 0 }, grounded: false, mem: { bad: [] } }); scene.add(mesh); } }
+    function spawnBots(n) { bots.forEach(b => scene.remove(b.mesh)); bots = []; const pool = CHARS.filter(c => c.id !== P.charId); for (let i = 0; i < n; i++) { const ch = pool[i % pool.length], name = BOT_NAMES[i % BOT_NAMES.length], mesh = makeChar(ch, name, true); mesh.position.set(Math.cos(i / n * 6.28) * 25, 5, Math.sin(i / n * 6.28) * 25); bots.push({ mesh, ch, name, emoji: ch.emoji, score: 0, stunned: 0, vel: { x: 0, y: 0, z: 0 }, grounded: false }); scene.add(mesh); } }
 
     function getGroundY(pos) { let gy = 0; solidPlatforms.forEach(sp => { if (d2(pos, sp.mesh.position) < sp.radius) gy = Math.max(gy, sp.topY); }); return gy; }
     function applyPhysics(pos, vel) { if (!grounded) vel.y -= G; pos.x += vel.x; pos.y += vel.y; pos.z += vel.z; const gy = getGroundY(pos); if (pos.y <= gy) { pos.y = gy; vel.y = 0; grounded = true; } else grounded = false; vel.x *= FRC; vel.z *= FRC; }
-    function applyBotPhysics(b) {
-        if (!b.grounded) b.vel.y -= G;
-        b.mesh.position.x += b.vel.x; b.mesh.position.y += b.vel.y; b.mesh.position.z += b.vel.z;
-        const gy = getGroundY(b.mesh.position);
-        if (b.mesh.position.y <= gy) {
-            b.mesh.position.y = gy; b.vel.y = 0; b.grounded = true;
-        } else {
-            b.grounded = false;
-            if (b.mesh.position.y < -20) {
-                b.mem.bad.push({ x: b.mesh.position.x, z: b.mesh.position.z });
-                b.mesh.position.set(0, 10, 0); b.vel.x = b.vel.y = b.vel.z = 0;
-            }
-        }
-        b.vel.x *= FRC; b.vel.z *= FRC;
-    }
+    function applyBotPhysics(b) { if (!b.grounded) b.vel.y -= G; b.mesh.position.x += b.vel.x; b.mesh.position.y += b.vel.y; b.mesh.position.z += b.vel.z; const gy = getGroundY(b.mesh.position); if (b.mesh.position.y <= gy) { b.mesh.position.y = gy; b.vel.y = 0; b.grounded = true; } else b.grounded = false; b.vel.x *= FRC; b.vel.z *= FRC; }
 
     function initControls() {
         mkJoy('joyL', 'knobL', 'l'); mkJoy('joyR', 'knobR', 'r');
@@ -501,11 +183,11 @@
         });
         updateCharDetail(getC(selChar));
     }
+    function updateCharDetail(c) {
     function updateScoreboard() {
         const sc = [{"name": "YOU", "score": Math.floor(P.score), "emoji": curC().emoji}].concat(bots.map(b => ({ "name": b.name, "score": Math.floor(b.score), "emoji": b.emoji }))).sort((a, b) => b.score - a.score);
         const b = $("sbBody"); if (b) { b.innerHTML = ""; sc.forEach(s => { const row = document.createElement("div"); row.className = "flex items-center justify-between text-[10px] font-black italic tracking-tighter"; row.innerHTML = `<div class="flex items-center gap-2"><img src="${getGvEmoji(s.emoji)}" class="size-4"><span>${esc(s.name)}</span></div><span>${Math.floor(s.score)}</span>`; b.appendChild(row); }); }
     }
-    function updateCharDetail(c) {
         const el = $('charDetail'); if (!el) return;
         el.innerHTML = `<h2 class="text-4xl font-black italic tracking-tighter mb-1">${esc(c.name.toUpperCase())}</h2><p class="text-primary text-[10px] font-black tracking-[0.4em] uppercase mb-6">${esc(c.role)}</p><div class="w-full bg-white/5 border border-white/10 rounded-3xl p-5 flex items-center justify-between"><div class="flex items-center gap-4"><div class="size-12 rounded-2xl bg-primary/10 flex items-center justify-center"><img src="${getGvEmoji(c.emoji)}" class="size-8"></div><div class="flex flex-col"><span class="text-[9px] text-gray-500 font-black uppercase">Ability</span><span class="text-white font-black italic text-xl tracking-tighter uppercase">${esc(c.skill)}</span></div></div></div>`;
         $('btnPlayAs').onclick = () => { P.charId = selChar; saveData(); spawnPlayer(); loadData(); hide('oChar'); };
@@ -516,8 +198,6 @@
     function doSkill() {
         if (P.skillCD > 0 || P.stunned > 0) return; const c = curC(); P.skillCD = c.sCD; cooldown('bSkill', 'cdSkill', c.sCD, 'skillCD');
         const f = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation.y);
-        mkParts(player.position.x, 1, player.position.z, c.color, 20);
-        showEmoji(player, c.emoji);
         switch (c.sType) {
             case 'tele': player.position.add(f.multiplyScalar(10)); break;
             case 'dash': pVel.x += f.x * 1.5; pVel.z += f.z * 1.5; break;
@@ -525,7 +205,6 @@
             case 'stun': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 10) { b.stunned = 2.5; b.vel.y = .2; } }); break;
             case 'smoke': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 10) { b.stunned = 2; } }); break;
             case 'knock': bots.forEach(b => { if (d3(player.position, b.mesh.position) < 8) { const dx = b.mesh.position.x-player.position.x, dz = b.mesh.position.z-player.position.z, m = Math.sqrt(dx*dx+dz*dz)||1; b.vel.x += (dx/m)*1.5; b.vel.z += (dz/m)*1.5; b.vel.y = 0.4; b.stunned = 1.5; } }); break;
-            case 'buff': P.buffTime = 5; notify('POWER UP!', 'ok'); break;
         }
         notify(c.skill.toUpperCase(), 'ok');
     }
@@ -535,15 +214,7 @@
         state = ST.CDOWN; curGame = game; $('hud').style.display = 'none'; show('CDOWN'); setText('cdName', game.name); setText('cdTip', game.tip);
         let cnt = 3; setText('cdNum', '3'); const iv = setInterval(() => { cnt--; if (cnt > 0) setText('cdNum', cnt); else if (cnt === 0) setText('cdNum', 'GO!'); else { clearInterval(iv); hide('CDOWN'); beginGame(); } }, 900);
     }
-    function buildArenaScenery() {
-        for(let i=0; i<30; i++) {
-            const ang = rnd(0, 6.28), dist = rnd(60, 100), x = Math.cos(ang)*dist, z = Math.sin(ang)*dist;
-            const r = sMesh(new THREE.DodecahedronGeometry(rnd(2, 5)), mat(0x444444));
-            r.position.set(x, 1, z); r.rotation.set(rnd(0,3), rnd(0,3), rnd(0,3)); addMesh(r);
-        }
-    }
     function buildArena(game) {
-        buildArenaScenery();
         lobbyMeshes.forEach(o => scene.remove(o)); lobbyMeshes = []; gameMeshes.forEach(o => scene.remove(o)); gameMeshes = []; interacts = []; stars = []; pads = []; solidPlatforms = [];
         const gnd = sMesh(new THREE.CircleGeometry(120, 60), mat(0x111111)); gnd.rotation.x = -1.57; addMesh(gnd);
         if (game.id === "stars") {
@@ -588,27 +259,17 @@
 
     function animate() {
         requestAnimationFrame(animate); const dt = Math.min(clk.getDelta(), .05), t = Date.now() * .001;
-        if (P.buffTime > 0) P.buffTime -= dt;
-        if (P.sprinting && joy.l.x**2 + joy.l.y**2 > 0.1) { P.stamina = Math.max(0, P.stamina - dt * 25); if (P.stamina <= 0) P.sprinting = false; } else { P.stamina = Math.min(100, P.stamina + dt * 15); }
-        particles3d.forEach((p, i) => {
-            p.position.x += p.userData.vx; p.position.y += p.userData.vy; p.position.z += p.userData.vz;
-            p.userData.vy -= 0.02; p.userData.life -= 0.02;
-            p.userData.m.opacity = p.userData.life;
-            if (p.userData.life <= 0) { scene.remove(p); particles3d.splice(i, 1); }
-        });
         scene.traverse(o => { if (o.userData.spin) o.rotation.y += dt * 2; if (o.userData.bob) o.position.y = (o.userData.baseY || 0) + Math.sin(t * 3) * 0.5; });
         if (state === ST.LOBBY) {
-            const inp = joy.l, spd = SPD * 0.75 * ( (P.buffTime > 0 ? 1.4 : 1) * (P.sprinting ? 1.5 : 1)), mag = Math.sqrt(inp.x ** 2 + inp.y ** 2);
+            const inp = joy.l, spd = SPD * 0.75, mag = Math.sqrt(inp.x ** 2 + inp.y ** 2);
             if (mag > .1) { const ang = Math.atan2(inp.x, inp.y) + camAng; pVel.x += Math.sin(ang) * mag * spd * .12; pVel.z += Math.cos(ang) * mag * spd * .12; player.rotation.y = ang; }
             applyPhysics(player.position, pVel); if (Math.abs(joy.r.x) > .1) camAng -= joy.r.x * .035;
-            const pd = d2(player.position, {x:0, z:0}); if(pd > 100) { player.position.x *= 100/pd; player.position.z *= 100/pd; }
             let bC = null, bD = Infinity; interacts.forEach(o => { const dd = d3(player.position, o.position); if (dd < (o.userData.r || 10) && dd < bD) { bD = dd; bC = o; } }); near = bC;
             const pr = $("PROMPT"); if (near && !document.querySelector(".overlay.show")) { $("prIcon").innerHTML = `<span class="material-symbols-outlined text-primary text-3xl">${near.userData.icon}</span>`; setText("prText", near.userData.text); pr.style.display = "flex"; } else pr.style.display = "none";
         } else if (state === ST.GAME) {
-            const inp = joy.l, spd = SPD * .5 * ( (P.buffTime > 0 ? 1.4 : 1) * (P.sprinting ? 1.5 : 1)), mag = Math.sqrt(inp.x ** 2 + inp.y ** 2);
+            const inp = joy.l, spd = SPD * .5, mag = Math.sqrt(inp.x ** 2 + inp.y ** 2);
             if (mag > .1 && P.stunned <= 0) { const ang = Math.atan2(inp.x, inp.y) + camAng; pVel.x += Math.sin(ang) * mag * spd; pVel.z += Math.cos(ang) * mag * spd; player.rotation.y = ang; }
             applyPhysics(player.position, pVel); if (Math.abs(joy.r.x) > .1) camAng -= joy.r.x * .035;
-            const pd = d2(player.position, {x:0, z:0}); if(pd > 100) { player.position.x *= 100/pd; player.position.z *= 100/pd; }
             if (curGame.id === "stars") {
                 stars.forEach((s, i) => {
                     if (d3(player.position, s.position) < 3) { P.score += s.userData.val; scene.remove(s); stars.splice(i, 1); spawnStar(); notify("+" + s.userData.val, "ok"); }
@@ -637,20 +298,7 @@
                     }); }, 2000); }
                 }
             }
-            bots.forEach(b => {
-                if (b.stunned > 0) { b.stunned -= dt; } else {
-                    let target = player.position;
-                    if (curGame.id === "stars" && stars.length > 0) target = stars[0].position;
-                    else if (curGame.id === "hill") target = hillMesh.position;
-                    else if (curGame.id === "sumo") target = hillMesh.position;
-                    else if (curGame.id === "tag") target = b.isIt ? player.position : { x: -player.position.x, z: -player.position.z };
-
-                    const dx = target.x - b.mesh.position.x, dz = target.z - b.mesh.position.z, d = Math.sqrt(dx*dx+dz*dz)||1;
-                    const s = SPD * 0.78; b.vel.x += (dx/d)*s*0.1; b.vel.z += (dz/d)*s*0.1;
-                    b.mesh.rotation.y = Math.atan2(dx, dz);
-                }
-                applyBotPhysics(b);
-            });
+            bots.forEach(b => { if (b.stunned > 0) b.stunned -= dt; applyBotPhysics(b); });
             updateScoreboard();
         }
         const tX = player.position.x + Math.sin(camAng) * 22, tZ = player.position.z + Math.cos(camAng) * 22, tY = player.position.y + 16;
@@ -663,13 +311,6 @@
     function startLoad() { let p = 0; const iv = setInterval(() => { p += rnd(16, 28); if (p > 100) p = 100; $('ldFill').style.width = p + '%'; if (p >= 100) { clearInterval(iv); setTimeout(() => { $('LD').classList.add('gone'); state = ST.LOBBY; }, 500); } }, 130); }
 
     loadData(); initThree(); buildLobby(); spawnPlayer(); spawnBots(5); initControls(); startLoad();
-    window.DEBUG = {
-        start: id => { const g = GAMES.find(x => x.id === id); if (g) startMinigame(g); },
-        gotoLobby: () => backToLobby(),
-        setGems: n => { P.gems = n; setText("hGems", n); saveData(); },
-        setLv: n => { P.lv = n; setText("hLv", n); saveData(); }
-    };
     animate();
 </script>
 </body>
-</html>
